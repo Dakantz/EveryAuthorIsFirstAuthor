@@ -1,0 +1,29 @@
+% Minimal LaTeX example.  Needs pdflatex or lualatex (microtype letterspacing).
+\documentclass{article}
+\usepackage{equalauthors}
+
+\equalauthorsSetup{alpha=1, beta=1}
+\equalauthorsAddAuthor{Peter Waldert}
+\equalauthorsAddAuthor{Benedikt Kantz}
+\equalauthorsAddAuthor{Thomas Köhler}
+\equalauthorsAddAuthor{Erik D. Demaine}
+\equalauthorsAddAuthor{Martin L. Demaine}
+
+\title{A Paper With No First Author}
+\author{\equalauthorsAuthors}
+\date{}
+
+\begin{document}
+  \maketitle
+
+  All five names above are superimposed and all are
+  \equalauthorsWidth\,pt wide. Unstacked, they look like this:
+
+  \begin{center}
+    \equalauthorsAuthorsStacked
+  \end{center}
+
+  The same works for a BibTeX-style name list:
+  \equalauthorsList{Erik D. Demaine and Martin L. Demaine}.
+
+\end{document}
