@@ -3,6 +3,10 @@
 \setlength{\columnsep}{0.6cm}
 \usepackage{amsmath, amssymb, amsthm}
 \usepackage{booktabs}
+\usepackage{minted}   % needs pdflatex -shell-escape (Overleaf: on by default)
+\setminted{fontsize=\small, breaklines=true, autogobble=true}
+\newmintinline[tex]{latex}{}
+\newmintinline[code]{text}{}
 \usepackage[colorlinks=true, hypertexnames=false]{hyperref}
 \usepackage[backend=biber, style=numeric]{biblatex}
 \addbibresource{sources.bib}
@@ -34,17 +38,28 @@
 \date{\today}
 
 \begin{document}
-  \maketitle
-
-  \begin{abstract}
-    \citeauthor{demaine2023every} propose that every author be a first author by superimposing all author names on the same spot of the title page.
-    The construction is typographically unstable, because names have different natural widths.
-    The superimposed block is ragged and the longest name dominates the visual mass, reintroducing exactly the ordering advantage the standard removes.
-    We close this loophole.
-    Each name is distorted by two knobs, a horizontal glyph scale and an inter-letter tracking, until all names occupy one common width $W$.
-    We give a quadratic distortion model, solve the per-name trade-off in closed form by Lagrange multipliers, and show that the total-distortion optimal common width is a stiffness-weighted mean of the natural widths.
-    We provide implementations as a \LaTeX{} package and a Typst package, covering author blocks and bibliography entries alike; this paper typesets its own author block and its own reference with the former.
-  \end{abstract}
+  \makeatletter
+  \twocolumn[
+    \begin{@twocolumnfalse}
+      \maketitle
+      \begin{center}
+        \begin{minipage}{0.9\textwidth}
+          \small
+          \begin{abstract}
+            \citeauthor{demaine2023every} propose that every author be a first author by superimposing all author names on the same spot of the title page.
+            The construction is typographically unstable, because names have different natural widths.
+            The superimposed block is ragged and the longest name dominates the visual mass, reintroducing exactly the ordering advantage the standard removes.
+            We close this loophole.
+            Each name is distorted by two knobs, a horizontal glyph scale and an inter-letter tracking, until all names occupy one common width $W$.
+            We give a quadratic distortion model, solve the per-name trade-off in closed form by Lagrange multipliers, and show that the total-distortion optimal common width is a stiffness-weighted mean of the natural widths.
+            We provide implementations as a \LaTeX{} package and a Typst package, covering author blocks and bibliography entries alike; this paper typesets its own author block and its own reference with the former.
+          \end{abstract}
+        \end{minipage}
+      \end{center}
+      \vspace{1.5\baselineskip}
+    \end{@twocolumnfalse}
+  ]
+  \makeatother
 
   \section{Introduction}
   The convention that author order encodes credit is a lossy encoding of a partial order into a total one.
@@ -84,7 +99,7 @@
   \end{definition}
 
   \begin{definition}[Distortion variables]
-    A name is typeset with a horizontal glyph scale $s > 0$, under which every character is drawn $s$ times as wide at unchanged height, and a tracking $t \in \mathbb{R}$, an extra kern inserted into each of the $g$ gaps.
+    A name is typeset with a horizontal glyph scale $s > 0$, under which every character is drawn $s$ times as wide at unchanged height, and a tracking $t \in \mathbb{R}$, an extra kern of length $t$ inserted into each of the $g$ gaps.
     The undistorted setting is $(s,t) = (1,0)$.
   \end{definition}
 
@@ -223,66 +238,64 @@
   \section{Implementation}
   \label{sec:impl}
   \subsection{\LaTeX}
-  The package \texttt{equalauthors.sty} implements \eqref{eq:stiffness} to \eqref{eq:clamp} in \texttt{expl3} floating point.
-  Names are collected with \verb|\equalauthorsAddAuthor|;
-  \verb|\equalauthorsAuthors| then
+  The package \code|equalauthors.sty| implements \eqref{eq:stiffness} to \eqref{eq:clamp} in \code|expl3| floating point.
+  Names are collected with \tex|\equalauthorsAddAuthor|;
+  \tex|\equalauthorsAuthors| then
 
   \begin{enumerate}
     \item measures each $w_i$ and $g_i$ as described below;
     \item accumulates $\sum_i w_i/K_i$ and $\sum_i 1/K_i$ to obtain $W^\star$;
     \item solves \eqref{eq:split} and \eqref{eq:clamp} per name;
-    \item sets each name as \verb|\scalebox{|$s_i$\verb|}[1]{\textls[|$\ell_i$%
-          \verb|]{|name\verb|}}|, where $\ell_i = 1000\,t_i/\mathrm{em}$ is the tracking in microtype's units;
-    \item overlaps the resulting boxes with \verb|\hbox_overlap_right:n| inside
+    \item sets each name as \tex|\scalebox{s}[1]{\textls[l]{name}}| with $s = s_i$ and $l = \ell_i = 1000\,t_i/\mathrm{em}$, the tracking in microtype's units, where $\mathrm{em}$ is the length named after the letter M, which in metal type was cast on a square body and so measures the nominal type size of the current font;
+    \item overlaps the resulting boxes with \tex|\hbox_overlap_right:n| inside
           one box of width $W^\star$.
   \end{enumerate}
 
   The name is never taken apart.
   An earlier version set each character in its own box and counted characters to obtain $c_i$; this is hostile in three independent ways.
-  On 8-bit engines a UTF-8 character is several input tokens, so splitting it breaks \texttt{inputenc}; an accent written as a command, \verb|\"o|, is a control sequence plus its letter, so splitting it strips the accent of its argument; and hand-set characters lose their kerning pairs, so the measured $w_i$ no longer describes what is printed.
-  Letterspacing is therefore delegated to the font machinery, via microtype's \verb|\textls|, and the two quantities the model needs are recovered by measurement instead of by parsing:
+  On 8-bit engines a UTF-8 character is several input tokens, so splitting it breaks \code|inputenc|; an accent written as a command, \tex|\"o|, is a control sequence plus its letter, so splitting it strips the accent of its argument; and hand-set characters lose their kerning pairs, so the measured $w_i$ no longer describes what is printed.
+  Letterspacing is therefore delegated to the font machinery, via microtype's \tex|\textls|, and the two quantities the model needs are recovered by measurement instead of by parsing,
   \begin{equation}
     w_i = \omega_i(1, 0), \qquad g_i = \frac{\partial \omega_i}{\partial t_i} = \frac{\omega_i(1, \mathrm{em}) - \omega_i(1, 0)}{\mathrm{em}} .
     \label{eq:measure}
   \end{equation}
-  Since \eqref{eq:width} is affine in $t_i$, the difference quotient in \eqref{eq:measure} is exact, and two \verb|\hbox_set:Nn| measurements per name suffice.
+  The second measurement sets the name with a tracking of one em in every gap, so the difference quotient counts the gaps.
+  Since \eqref{eq:width} is affine in $t_i$, that quotient is exact, and two \tex|\hbox_set:Nn| measurements per name suffice.
   The character count enters only through $c_i = g_i + 1$ in $e_i = w_i/c_i$, so it too comes from \eqref{eq:measure} and no notion of ``character'' has to be committed to.
   The companion command
-  \verb|\equalauthorsAuthorsStacked| prints the same distorted names one per
+  \tex|\equalauthorsAuthorsStacked| prints the same distorted names one per
   line, which is how one verifies equal width by eye.
 
   Microtype expresses tracking in whole thousandths of an em, so $\ell_i$ is rounded and $t_i$ is quantised.
   The residual is not dropped: $s_i$ is recomputed from the quantised $t_i$ as $s_i = (W^\star - g_i t_i)/w_i$, which is the same projection argument as \eqref{eq:clamp} with the roles of the two variables exchanged, so the realised width remains exactly $W^\star$ while $s_i$ moves by less than $10^{-3}$.
   Weights and bounds are set with
-  \begin{quote}
-    \small\verb|\equalauthorsSetup{alpha=1, beta=1,|\\
-    \small\verb|                   smin=0.85, smax=1.15}|
-  \end{quote}
+  \begin{minted}{latex}
+    \equalauthorsSetup{alpha=1, beta=1, smin=0.85, smax=1.15}
+  \end{minted}
 
   \subsection{Citations}
   A reference list ranks authors exactly as a title page does, so the standard is only self-consistent if citations are superimposed as well.
   The command
-  \verb|\equalauthorsList| takes a BibTeX-style name list
-  \texttt{A and B and C}, splits it on \texttt{and}, and applies \eqref{eq:wstar} and \eqref{eq:split} to the result.
+  \tex|\equalauthorsList| takes a BibTeX-style name list
+  \code|A and B and C|, splits it on \code|and|, and applies \eqref{eq:wstar} and \eqref{eq:split} to the result.
   No bibliography style has to be patched.
-  The macro is placed in the \texttt{author} field of the \texttt{.bib} entry inside an extra pair of braces,
-  \begin{quote}
-    \small\verb|author = {{\equalauthorsList{Erik D.|\\
-    \small\verb|         Demaine and Martin L. Demaine}}}|
-  \end{quote}
-  which hides the \texttt{and} separators from biber and makes it pass the field through verbatim.
+  The macro is placed in the \code|author| field of the \code|.bib| entry inside an extra pair of braces,
+  \begin{minted}{latex}
+    author = {{\equalauthorsList{Erik D. Demaine and Martin L. Demaine}}}
+  \end{minted}
+  which hides the \code|and| separators from biber and makes it pass the field through verbatim.
   The reference to the original paper~\cite{demaine2023every} in this document is typeset this way.
   Its common width $W^\star$ is computed over the two cited names alone, since equal width is a property of one name list, never a global constant.
 
   \subsection{Typst}
-  The Typst package exposes the same functions, \texttt{optimal-width}, \texttt{solve}, \texttt{eqa-authors} and the name-list form \texttt{eqa-list}, using \texttt{measure} inside a \texttt{context} block for $w_i$, \texttt{scale(x: ..., reflow: true)} for $s_i$, and the \texttt{text(tracking: ...)} parameter for $t_i$.
+  The Typst package exposes the same functions, \code|optimal-width|, \code|solve|, \code|eqa-authors| and the name-list form \code|eqa-list|, using \code|measure| inside a \code|context| block for $w_i$, \code|scale(x: ..., reflow: true)| for $s_i$, and the \code|text(tracking: ...)| parameter for $t_i$.
   Grapheme clusters are a native notion there, so the encoding difficulties of Section~\ref{sec:impl} do not arise and $g_i$ is counted directly.
   Because Typst applies tracking inside the scaled coordinate frame, the tracking handed to the engine is $t_i / s_i$; the realised width is then $s_i w_i + g_i t_i$ as in \eqref{eq:width}.
   A self-check compiles the distorted names and asserts that every measured width equals $W^\star$ to within $10^{-4}$\,pt.
 
   Bibliographies need a different hook there.
-  Typst renders references through a CSL style and exposes no element for the author list of an entry, so there is nothing to attach a \texttt{show} rule to.
-  The hook is therefore moved into the citation style itself: \texttt{equalauthors.csl} is an ordinary numeric style whose only peculiarity is that it fences each entry's author list between two invisible \textsc{u+2062} characters, and the accompanying \texttt{equal-references} show rule matches exactly those runs and replaces them with the superimposed list.
+  Typst renders references through a CSL style and exposes no element for the author list of an entry, so there is nothing to attach a \code|show| rule to.
+  The hook is therefore moved into the citation style itself: \code|equalauthors.csl| is an ordinary numeric style whose only peculiarity is that it fences each entry's author list between two invisible \textsc{u+2062} characters, and the accompanying \code|equal-references| show rule matches exactly those runs and replaces them with the superimposed list.
   The style does the name formatting and the numbering as usual; the rule never has to guess where a name begins.
 
   \section{Results}
