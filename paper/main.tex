@@ -1,11 +1,17 @@
 \documentclass[10pt,twocolumn]{article}
-\usepackage[a4paper, margin=1.2cm, bottom=2cm]{geometry}
-\setlength{\columnsep}{0.8cm}
+\usepackage[a4paper, margin=1.25cm, bottom=2cm]{geometry}
+\setlength{\columnsep}{0.6cm}
 \usepackage{amsmath, amssymb, amsthm}
 \usepackage{booktabs}
-\usepackage{hyperref}
-\usepackage[backend=biber,style=numeric]{biblatex}
+\usepackage[colorlinks=true, hypertexnames=false]{hyperref}
+\usepackage[backend=biber, style=numeric]{biblatex}
 \addbibresource{sources.bib}
+\hypersetup{
+  urlcolor=blue,
+  linkcolor=blue,
+  citecolor=blue
+}
+
 % The package lives in ../lib.  Symlinks do not survive an upload to
 % Overleaf (they arrive as text files, and the whole preamble then prints as
 % a stray first page), so the directory is searched explicitly instead:
@@ -65,19 +71,19 @@
   width as a visible, and thus creditable, per-author quantity.
 
   We therefore require that all names be typeset to one common width. Since
-  names cannot be padded with whitespace --- padding is invisible under
-  superimposition and merely restores the containment problem --- the width must
+  names cannot be padded with whitespace - padding is invisible under
+  superimposition and merely restores the containment problem - the width must
   be achieved by distorting the letters themselves. Two distortions are
   available, and they differ in character: scaling the glyphs horizontally
   changes letterform, while tracking changes only the gaps. Both are ugly in
   excess. The engineering question is how to divide a required width change
   between them, and what common width to aim at in the first place.
 
-  Sections~\ref{sec:model}--\ref{sec:width} answer both in closed form.
+  Sections~\ref{sec:model} and~\ref{sec:solution} answer both in closed form.
   Section~\ref{sec:impl} describes the implementations and
   Section~\ref{sec:results} the resulting numbers.
 
-  \section{Notation and problem statement}
+  \section{Notation and Problem Statement}
   \label{sec:model}
 
   Fix a font, a size, and a set of $n \ge 1$ author names indexed by
@@ -144,11 +150,18 @@
     \end{equation}
   \end{definition}
 
-  We solve \eqref{eq:problem} in two stages: the inner problem for fixed $W$
-  (Section~\ref{sec:split}), then the outer problem over $W$
+  Section~\ref{sec:solution} solves \eqref{eq:problem} in two stages: the inner
+  problem for fixed $W$, then the outer problem over $W$.
+
+  \section{Closed-Form Solution}
+  \label{sec:solution}
+
+  The problem separates: for a fixed common width the per-name trade-off has an
+  explicit minimiser (Section~\ref{sec:split}), whose optimal value is quadratic
+  in that width, so the outer choice of width is an explicit weighted mean
   (Section~\ref{sec:width}).
 
-  \section{The optimal split for a fixed width}
+  \subsection{The Optimal Split for a Fixed Width}
   \label{sec:split}
 
   Fix $W$ and drop the index $i$. Write $x = s - 1$ for the scale excess and
@@ -221,7 +234,7 @@
   each''. Second, $C_i^\star$ is quadratic in $W$, which makes the outer problem
   trivial.
 
-  \section{The optimal common width}
+  \subsection{The Optimal Common Width}
   \label{sec:width}
 
   \begin{proposition}[Optimal width]
@@ -251,10 +264,10 @@
   else, nor the arithmetic mean width, but a mean that down-weights names that
   are expensive to move. Since $K_i$ grows roughly like $w_i^2$, long names are
   stiff, contribute little pull, and $W^\star$ is biased towards the short
-  names --- correctly, because a short name pays the largest \emph{relative}
+  names - correctly, because a short name pays the largest \emph{relative}
   distortion for a given absolute change.
 
-  \subsection{Feasibility and clamping}
+  \subsection{Feasibility and Clamping}
 
   Unbounded $s_i$ and $t_i$ are typographically unacceptable, so we impose
   $s_i \in [s_{\min}, s_{\max}]$, with defaults $0.85$ and $1.15$, and,
@@ -353,9 +366,9 @@
 
   \subsection{Typst}
 
-  The Typst package exposes the same functions ---
+  The Typst package exposes the same functions,
   \texttt{optimal-width}, \texttt{solve}, \texttt{eqa-authors} and the name-list
-  form \texttt{eqa-list} --- using
+  form \texttt{eqa-list}, using
   \texttt{measure} inside a \texttt{context} block for $w_i$,
   \texttt{scale(x: ..., reflow: true)} for $s_i$, and the
   \texttt{text(tracking: ...)} parameter for $t_i$. Grapheme clusters are a native notion there, so
