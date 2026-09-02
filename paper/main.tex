@@ -66,52 +66,56 @@
 
   \section{Notation and Problem Statement}
   \label{sec:model}
-  Fix a font, a size, and a set of $n \ge 1$ author names indexed by $i \in \{1,\dots,n\}$.
+  Fix a font and a size.
   All lengths are in printer's points.
+  The model is stated for a single name and carries no index; the index appears only where names are compared.
 
   \begin{definition}[Name data]
-    For name $i$ we write
+    For a name we write
     \begin{itemize}
-      \item $g_i \in \mathbb{N}_{\ge 0}$, the number of inter-character gaps of
-            name $i$, that is, the number of positions at which tracking is inserted;
-      \item $c_i = g_i + 1$, the number of characters;
-      \item $w_i > 0$, the natural set width of name $i$, as the font sets it;
-      \item $e_i = w_i / c_i$, the mean character width, which is the natural
-            length scale of name $i$.
+      \item $g \in \mathbb{N}_{\ge 0}$, the number of inter-character gaps, that is,
+            the number of positions at which tracking is inserted;
+      \item $c = g + 1$, the number of characters;
+      \item $w > 0$, the natural set width, as the font sets it;
+      \item $e = w / c$, the mean character width, which is the natural length
+            scale of the name.
     \end{itemize}
-    Section~\ref{sec:impl} obtains $w_i$ and $g_i$ by measurement, without inspecting the name.
+    Section~\ref{sec:impl} obtains $w$ and $g$ by measurement, without inspecting the name.
   \end{definition}
 
   \begin{definition}[Distortion variables]
-    Name $i$ is typeset with a horizontal glyph scale $s_i > 0$, under which every character is drawn $s_i$ times as wide at unchanged height, and a tracking $t_i \in \mathbb{R}$, an extra kern inserted into each of the $g_i$ gaps.
-    The undistorted setting is $(s_i,t_i) = (1,0)$.
+    A name is typeset with a horizontal glyph scale $s > 0$, under which every character is drawn $s$ times as wide at unchanged height, and a tracking $t \in \mathbb{R}$, an extra kern inserted into each of the $g$ gaps.
+    The undistorted setting is $(s,t) = (1,0)$.
   \end{definition}
 
-  Because the scale acts on characters and the tracking on gaps, the two contributions are additive and the set width of the distorted name is exactly
+  Because the scale acts on characters and the tracking on gaps, the two contributions are additive and the realised width of the distorted name is exactly
   \begin{equation}
-    W_i(s_i,t_i) \;=\; s_i\,w_i + g_i\,t_i .
+    \omega(s,t) \;=\; s\,w + g\,t .
     \label{eq:width}
   \end{equation}
+  The symbol $\omega$ is reserved for the width a name actually attains, and $W$ below for the common width all names are asked to attain.
 
   \begin{definition}[Distortion cost]
-    With weights $\alpha,\beta > 0$, the ugliness of name $i$ is
+    With weights $\alpha,\beta > 0$, the ugliness of a name is
     \begin{equation}
-      C_i(s_i,t_i) \;=\; \tfrac{\alpha}{2}\,(s_i - 1)^2 \;+\; \tfrac{\beta}{2}\,\Bigl(\frac{t_i}{e_i}\Bigr)^{\!2}.
+      C(s,t) \;=\; \tfrac{\alpha}{2}\,(s - 1)^2 \;+\; \tfrac{\beta}{2}\,\Bigl(\frac{t}{e}\Bigr)^{\!2}.
       \label{eq:cost}
     \end{equation}
   \end{definition}
 
   Both terms are quadratic and vanish at the undistorted setting, so small distortions are cheap and the cost grows without bound.
   The scale term is dimensionless by construction.
-  The tracking term is made dimensionless by measuring $t_i$ in units of the mean character width $e_i$: a kern of one average letter is equally offensive in a large font and a small one, and equally offensive in a name of five letters and one of twenty.
+  The tracking term is made dimensionless by measuring $t$ in units of the mean character width $e$: a kern of one average letter is equally offensive in a large font and a small one, and equally offensive in a name of five letters and one of twenty.
   The ratio $\beta/\alpha$ is the only free parameter of the model and expresses the designer's relative tolerance: $\beta/\alpha \to \infty$ forbids tracking and recovers pure scaling, $\beta/\alpha \to 0$ forbids scaling and recovers pure tracking.
+
+  A document has $n \ge 1$ names, indexed by $i \in \{1,\dots,n\}$, and from here on the quantities of name $i$ carry that index, so that $g_i$, $c_i$, $w_i$, $e_i$, $s_i$, $t_i$, $\omega_i$ and $C_i$ mean for name $i$ what $g$, $c$, $w$, $e$, $s$, $t$, $\omega$ and $C$ mean for a single name, and the same applies to quantities introduced later, such as the stiffness $K$ of Section~\ref{sec:split}.
 
   \begin{definition}[Equal-width superimposition problem]
     Given $\{(w_i,g_i,e_i)\}_{i=1}^{n}$ and $\alpha,\beta > 0$, find a common width $W > 0$ and per-name distortions $(s_i,t_i)$ solving
     \begin{equation}
       \begin{aligned}
         \min_{W,\,(s_i,t_i)} \quad & \sum_{i=1}^{n} C_i(s_i,t_i)                  \\
-        \text{s.t.} \quad          & s_i w_i + g_i t_i = W, \quad i = 1,\dots,n .
+        \text{s.t.} \quad          & \omega_i(s_i,t_i) = W, \quad i = 1,\dots,n .
       \end{aligned}
       \label{eq:problem}
     \end{equation}
@@ -126,31 +130,31 @@
 
   \subsection{The Optimal Split for a Fixed Width}
   \label{sec:split}
-  Fix $W$ and drop the index $i$.
-  Write $x = s - 1$ for the scale excess and $d = W - w$ for the width deficit; the constraint \eqref{eq:width} becomes $w x + g t = d$ and the cost \eqref{eq:cost} becomes $\frac{\alpha}{2}x^2 + \frac{\beta}{2}(t/e)^2$.
+  This subsection concerns one name at a time, so it needs no index.
+  Fix the target width $W$, and write $x = s - 1$ for the scale excess and $d = W - w$ for the width deficit; the constraint $\omega(s,t) = W$ becomes $w x + g t = d$, while the cost \eqref{eq:cost} reads $\frac{\alpha}{2}x^2 + \frac{\beta}{2}(t/e)^2$.
 
   \begin{definition}[Stiffness]
-    The \emph{stiffness} of name $i$ is
+    The \emph{stiffness} of a name is
     \begin{equation}
-      K_i \;=\; \frac{w_i^2}{\alpha} \;+\; \frac{g_i^2 e_i^2}{\beta} \;>\; 0 .
+      K \;=\; \frac{w^2}{\alpha} \;+\; \frac{g^2 e^2}{\beta} \;>\; 0 .
       \label{eq:stiffness}
     \end{equation}
   \end{definition}
 
-  $K_i$ measures how cheaply name $i$ absorbs a width change.
+  $K$ measures how cheaply a name absorbs a width change.
   It is large when the name is long, since a given absolute change is then a small relative change, and small for short names.
-  This is why $K_i$ appears as an inverse weight below.
+  This is why $K$ appears as an inverse weight below.
 
   \begin{proposition}[Per-name split]
     \label{prop:split}
-    For fixed $W$, the unique minimiser of \eqref{eq:cost} subject to \eqref{eq:width} is, with $\lambda_i = (W - w_i)/K_i$,
+    For fixed $W$, the unique minimiser of \eqref{eq:cost} subject to $\omega(s,t) = W$ is, with $\lambda = (W - w)/K$,
     \begin{equation}
-      s_i \;=\; 1 + \frac{\lambda_i w_i}{\alpha}, \qquad t_i \;=\; \frac{\lambda_i g_i e_i^2}{\beta},
+      s \;=\; 1 + \frac{\lambda w}{\alpha}, \qquad t \;=\; \frac{\lambda g e^2}{\beta},
       \label{eq:split}
     \end{equation}
     and the optimal value is
     \begin{equation}
-      C_i^\star(W) \;=\; \frac{(W - w_i)^2}{2 K_i}.
+      C^\star(W) \;=\; \frac{(W - w)^2}{2 K}.
       \label{eq:cstar}
     \end{equation}
   \end{proposition}
@@ -173,12 +177,12 @@
   Two consequences are worth stating.
   First, the two distortions are used in the fixed ratio
   \begin{equation}
-    \frac{g_i t_i}{(s_i - 1) w_i} \;=\; \frac{\alpha\, g_i^2 e_i^2}{\beta\, w_i^2} \;\approx\; \frac{\alpha}{\beta} ,
+    \frac{g t}{(s - 1) w} \;=\; \frac{\alpha\, g^2 e^2}{\beta\, w^2} \;\approx\; \frac{\alpha}{\beta} ,
     \label{eq:ratio}
   \end{equation}
-  where the approximation uses $g_i e_i \approx w_i$ and is exact up to one character.
+  where the approximation uses $g e \approx w$ and is exact up to one character.
   The width change is therefore split between tracking and scaling in essentially the ratio $\alpha : \beta$, independently of $W$; the weights are directly interpretable, and $\alpha = \beta = 1$ means ``half the correction each''.
-  Second, $C_i^\star$ is quadratic in $W$, which makes the outer problem trivial.
+  Second, $C^\star$ is quadratic in $W$, which makes the outer problem trivial.
 
   \subsection{The Optimal Common Width}
   \label{sec:width}
@@ -238,7 +242,7 @@
   On 8-bit engines a UTF-8 character is several input tokens, so splitting it breaks \texttt{inputenc}; an accent written as a command, \verb|\"o|, is a control sequence plus its letter, so splitting it strips the accent of its argument; and hand-set characters lose their kerning pairs, so the measured $w_i$ no longer describes what is printed.
   Letterspacing is therefore delegated to the font machinery, via microtype's \verb|\textls|, and the two quantities the model needs are recovered by measurement instead of by parsing:
   \begin{equation}
-    w_i = W_i(1, 0), \qquad g_i = \frac{\partial W_i}{\partial t_i} = \frac{W_i(1, \mathrm{em}) - W_i(1, 0)}{\mathrm{em}} .
+    w_i = \omega_i(1, 0), \qquad g_i = \frac{\partial \omega_i}{\partial t_i} = \frac{\omega_i(1, \mathrm{em}) - \omega_i(1, 0)}{\mathrm{em}} .
     \label{eq:measure}
   \end{equation}
   Since \eqref{eq:width} is affine in $t_i$, the difference quotient in \eqref{eq:measure} is exact, and two \verb|\hbox_set:Nn| measurements per name suffice.
@@ -332,5 +336,4 @@
   Both are one line of arithmetic per name, so every author can be a first author of exactly the same size at no measurable cost in compile time.
 
   \printbibliography
-
 \end{document}
