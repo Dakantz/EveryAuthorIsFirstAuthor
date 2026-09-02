@@ -6,11 +6,7 @@
 \usepackage[colorlinks=true, hypertexnames=false]{hyperref}
 \usepackage[backend=biber, style=numeric]{biblatex}
 \addbibresource{sources.bib}
-\hypersetup{
-  urlcolor=blue,
-  linkcolor=blue,
-  citecolor=blue
-}
+\hypersetup{ urlcolor=blue, linkcolor=blue, citecolor=blue }
 
 % The package lives in ../lib.  Symlinks do not survive an upload to
 % Overleaf (they arrive as text files, and the whole preamble then prints as
@@ -41,78 +37,57 @@
   \maketitle
 
   \begin{abstract}
-    \citeauthor{demaine2023every} propose that every author be a first author by
-    superimposing all author names on the same spot of the title page. The
-    construction is typographically unstable: names have different natural
-    widths, so the superimposed block is ragged and the longest name dominates
-    the visual mass, reintroducing exactly the ordering advantage the standard
-    removes. We close this loophole. Each name is distorted by two knobs, a
-    horizontal glyph scale and an inter-letter tracking, until all names occupy
-    one common width $W$. We give a quadratic distortion model, solve the
-    per-name trade-off in closed form by Lagrange multipliers, and show that the
-    total-distortion optimal common width is a stiffness-weighted mean of the
-    natural widths. We provide implementations as a \LaTeX{} package and a Typst
-    package, covering author blocks and bibliography entries alike; this paper
-    typesets its own author block and its own reference with the former.
+    \citeauthor{demaine2023every} propose that every author be a first author by superimposing all author names on the same spot of the title page.
+    The construction is typographically unstable, because names have different natural widths.
+    The superimposed block is ragged and the longest name dominates the visual mass, reintroducing exactly the ordering advantage the standard removes.
+    We close this loophole.
+    Each name is distorted by two knobs, a horizontal glyph scale and an inter-letter tracking, until all names occupy one common width $W$.
+    We give a quadratic distortion model, solve the per-name trade-off in closed form by Lagrange multipliers, and show that the total-distortion optimal common width is a stiffness-weighted mean of the natural widths.
+    We provide implementations as a \LaTeX{} package and a Typst package, covering author blocks and bibliography entries alike; this paper typesets its own author block and its own reference with the former.
   \end{abstract}
 
   \section{Introduction}
+  The convention that author order encodes credit is a lossy encoding of a partial order into a total one.
+  \citeauthor{demaine2023every} \cite{demaine2023every} resolve it by making the encoding degenerate, superimposing all author names at the same position, so that no name precedes another.
 
-  The convention that author order encodes credit is a lossy encoding of a
-  partial order into a total one. \citeauthor{demaine2023every}
-  \cite{demaine2023every} resolve it by making the encoding degenerate: all author names are
-  superimposed at the same position, so that no name precedes another.
+  Superimposition removes the horizontal ordering but not the horizontal \emph{extent}.
+  If Xu Li and Martin L.~Demaine are overprinted, the shorter name is contained in the longer one, and the reader's eye recovers a ranking from ink coverage, where the widest name frames the block and the narrowest hides inside it.
+  Formally, superimposition quotients out translation but leaves width as a visible, and thus creditable, per-author quantity.
 
-  Superimposition removes the horizontal ordering but not the horizontal
-  \emph{extent}. If Xu Li and Martin L.~Demaine are overprinted, the shorter
-  name is contained in the longer one, and the reader's eye recovers a ranking
-  from ink coverage: the widest name frames the block, the narrowest hides
-  inside it. Formally, superimposition quotients out translation but leaves
-  width as a visible, and thus creditable, per-author quantity.
-
-  We therefore require that all names be typeset to one common width. Since
-  names cannot be padded with whitespace - padding is invisible under
-  superimposition and merely restores the containment problem - the width must
-  be achieved by distorting the letters themselves. Two distortions are
-  available, and they differ in character: scaling the glyphs horizontally
-  changes letterform, while tracking changes only the gaps. Both are ugly in
-  excess. The engineering question is how to divide a required width change
-  between them, and what common width to aim at in the first place.
+  We therefore require that all names be typeset to one common width.
+  Since names cannot be padded with whitespace - padding is invisible under superimposition and merely restores the containment problem - the width must be achieved by distorting the letters themselves.
+  Two distortions are available, and they differ in character.
+  Scaling the glyphs horizontally changes letterform, while tracking changes only the gaps.
+  Both are ugly in excess.
+  The engineering question is how to divide a required width change between them, and what common width to aim at in the first place.
 
   Sections~\ref{sec:model} and~\ref{sec:solution} answer both in closed form.
-  Section~\ref{sec:impl} describes the implementations and
-  Section~\ref{sec:results} the resulting numbers.
+  Section~\ref{sec:impl} describes the implementations and Section~\ref{sec:results} the resulting numbers.
 
   \section{Notation and Problem Statement}
   \label{sec:model}
-
-  Fix a font, a size, and a set of $n \ge 1$ author names indexed by
-  $i \in \{1,\dots,n\}$. All lengths are in printer's points.
+  Fix a font, a size, and a set of $n \ge 1$ author names indexed by $i \in \{1,\dots,n\}$.
+  All lengths are in printer's points.
 
   \begin{definition}[Name data]
     For name $i$ we write
     \begin{itemize}
       \item $g_i \in \mathbb{N}_{\ge 0}$, the number of inter-character gaps of
-            name $i$, that is, the number of positions at which tracking is
-            inserted;
+            name $i$, that is, the number of positions at which tracking is inserted;
       \item $c_i = g_i + 1$, the number of characters;
       \item $w_i > 0$, the natural set width of name $i$, as the font sets it;
       \item $e_i = w_i / c_i$, the mean character width, which is the natural
             length scale of name $i$.
     \end{itemize}
-    Section~\ref{sec:impl} obtains $w_i$ and $g_i$ by measurement rather than
-    by inspecting the name.
+    Section~\ref{sec:impl} obtains $w_i$ and $g_i$ by measurement, without inspecting the name.
   \end{definition}
 
   \begin{definition}[Distortion variables]
-    Name $i$ is typeset with a horizontal glyph scale $s_i > 0$, under which
-    every character is drawn $s_i$ times as wide at unchanged height, and a
-    tracking $t_i \in \mathbb{R}$, an extra kern inserted into each of the $g_i$
-    gaps. The undistorted setting is $(s_i,t_i) = (1,0)$.
+    Name $i$ is typeset with a horizontal glyph scale $s_i > 0$, under which every character is drawn $s_i$ times as wide at unchanged height, and a tracking $t_i \in \mathbb{R}$, an extra kern inserted into each of the $g_i$ gaps.
+    The undistorted setting is $(s_i,t_i) = (1,0)$.
   \end{definition}
 
-  Because the scale acts on characters and the tracking on gaps, the two
-  contributions are additive and the set width of the distorted name is exactly
+  Because the scale acts on characters and the tracking on gaps, the two contributions are additive and the set width of the distorted name is exactly
   \begin{equation}
     W_i(s_i,t_i) \;=\; s_i\,w_i + g_i\,t_i .
     \label{eq:width}
@@ -121,26 +96,18 @@
   \begin{definition}[Distortion cost]
     With weights $\alpha,\beta > 0$, the ugliness of name $i$ is
     \begin{equation}
-      C_i(s_i,t_i) \;=\; \tfrac{\alpha}{2}\,(s_i - 1)^2
-      \;+\; \tfrac{\beta}{2}\,\Bigl(\frac{t_i}{e_i}\Bigr)^{\!2}.
+      C_i(s_i,t_i) \;=\; \tfrac{\alpha}{2}\,(s_i - 1)^2 \;+\; \tfrac{\beta}{2}\,\Bigl(\frac{t_i}{e_i}\Bigr)^{\!2}.
       \label{eq:cost}
     \end{equation}
   \end{definition}
 
-  Both terms are quadratic and vanish at the undistorted setting, so small
-  distortions are cheap and the cost grows without bound. The scale term is
-  dimensionless by construction. The tracking term is made dimensionless by
-  measuring $t_i$ in units of the mean character width $e_i$: a kern of one
-  average letter is equally offensive in a large font and a small one, and
-  equally offensive in a name of five letters and one of twenty. The ratio
-  $\beta/\alpha$ is the only free parameter of the model and expresses the
-  designer's relative tolerance: $\beta/\alpha \to \infty$ forbids tracking and
-  recovers pure scaling, $\beta/\alpha \to 0$ forbids scaling and recovers pure
-  tracking.
+  Both terms are quadratic and vanish at the undistorted setting, so small distortions are cheap and the cost grows without bound.
+  The scale term is dimensionless by construction.
+  The tracking term is made dimensionless by measuring $t_i$ in units of the mean character width $e_i$: a kern of one average letter is equally offensive in a large font and a small one, and equally offensive in a name of five letters and one of twenty.
+  The ratio $\beta/\alpha$ is the only free parameter of the model and expresses the designer's relative tolerance: $\beta/\alpha \to \infty$ forbids tracking and recovers pure scaling, $\beta/\alpha \to 0$ forbids scaling and recovers pure tracking.
 
   \begin{definition}[Equal-width superimposition problem]
-    Given $\{(w_i,g_i,e_i)\}_{i=1}^{n}$ and $\alpha,\beta > 0$, find a common
-    width $W > 0$ and per-name distortions $(s_i,t_i)$ solving
+    Given $\{(w_i,g_i,e_i)\}_{i=1}^{n}$ and $\alpha,\beta > 0$, find a common width $W > 0$ and per-name distortions $(s_i,t_i)$ solving
     \begin{equation}
       \begin{aligned}
         \min_{W,\,(s_i,t_i)} \quad & \sum_{i=1}^{n} C_i(s_i,t_i)                  \\
@@ -150,24 +117,17 @@
     \end{equation}
   \end{definition}
 
-  Section~\ref{sec:solution} solves \eqref{eq:problem} in two stages: the inner
-  problem for fixed $W$, then the outer problem over $W$.
+  Section~\ref{sec:solution} solves \eqref{eq:problem} in two stages, the inner problem for fixed $W$, then the outer problem over $W$.
 
   \section{Closed-Form Solution}
   \label{sec:solution}
-
-  The problem separates: for a fixed common width the per-name trade-off has an
-  explicit minimiser (Section~\ref{sec:split}), whose optimal value is quadratic
-  in that width, so the outer choice of width is an explicit weighted mean
-  (Section~\ref{sec:width}).
+  The problem separates.
+  For a fixed common width the per-name trade-off has an explicit minimiser (Section~\ref{sec:split}), whose optimal value is quadratic in that width, so the outer choice of width is an explicit weighted mean (Section~\ref{sec:width}).
 
   \subsection{The Optimal Split for a Fixed Width}
   \label{sec:split}
-
-  Fix $W$ and drop the index $i$. Write $x = s - 1$ for the scale excess and
-  $d = W - w$ for the width deficit; the constraint \eqref{eq:width} becomes
-  $w x + g t = d$ and the cost \eqref{eq:cost} becomes
-  $\frac{\alpha}{2}x^2 + \frac{\beta}{2}(t/e)^2$.
+  Fix $W$ and drop the index $i$.
+  Write $x = s - 1$ for the scale excess and $d = W - w$ for the width deficit; the constraint \eqref{eq:width} becomes $w x + g t = d$ and the cost \eqref{eq:cost} becomes $\frac{\alpha}{2}x^2 + \frac{\beta}{2}(t/e)^2$.
 
   \begin{definition}[Stiffness]
     The \emph{stiffness} of name $i$ is
@@ -177,19 +137,15 @@
     \end{equation}
   \end{definition}
 
-  $K_i$ measures how cheaply name $i$ absorbs a width change: it is large when
-  the name is long, since a given absolute change is then a small relative
-  change, and small for short names. This is why $K_i$ appears as an inverse
-  weight below.
+  $K_i$ measures how cheaply name $i$ absorbs a width change.
+  It is large when the name is long, since a given absolute change is then a small relative change, and small for short names.
+  This is why $K_i$ appears as an inverse weight below.
 
   \begin{proposition}[Per-name split]
     \label{prop:split}
-    For fixed $W$, the unique minimiser of \eqref{eq:cost} subject to
-    \eqref{eq:width} is, with $\lambda_i = (W - w_i)/K_i$,
+    For fixed $W$, the unique minimiser of \eqref{eq:cost} subject to \eqref{eq:width} is, with $\lambda_i = (W - w_i)/K_i$,
     \begin{equation}
-      s_i \;=\; 1 + \frac{\lambda_i w_i}{\alpha},
-      \qquad
-      t_i \;=\; \frac{\lambda_i g_i e_i^2}{\beta},
+      s_i \;=\; 1 + \frac{\lambda_i w_i}{\alpha}, \qquad t_i \;=\; \frac{\lambda_i g_i e_i^2}{\beta},
       \label{eq:split}
     \end{equation}
     and the optimal value is
@@ -200,47 +156,35 @@
   \end{proposition}
 
   \begin{proof}
-    The objective is strictly convex and the constraint affine, so the
-    Karush--Kuhn--Tucker conditions are necessary and sufficient. With
-    Lagrangian
+    The objective is strictly convex and the constraint affine, so the Karush-Kuhn-Tucker conditions are necessary and sufficient.
+    With Lagrangian
     \[
-      \mathcal{L} = \frac{\alpha}{2}x^2 + \frac{\beta}{2}\frac{t^2}{e^2}
-      - \lambda\,(w x + g t - d),
+      \mathcal{L} = \frac{\alpha}{2}x^2 + \frac{\beta}{2}\frac{t^2}{e^2} - \lambda\,(w x + g t - d),
     \]
-    stationarity gives $\alpha x = \lambda w$ and $\beta t / e^2 = \lambda g$,
-    that is, $x = \lambda w/\alpha$ and $t = \lambda g e^2/\beta$. Substituting
-    into the constraint,
+    stationarity gives $\alpha x = \lambda w$ and $\beta t / e^2 = \lambda g$, that is, $x = \lambda w/\alpha$ and $t = \lambda g e^2/\beta$.
+    Substituting into the constraint,
     \[
-      d = w x + g t
-      = \lambda\Bigl(\frac{w^2}{\alpha} + \frac{g^2 e^2}{\beta}\Bigr)
-      = \lambda K ,
+      d = w x + g t = \lambda\Bigl(\frac{w^2}{\alpha} + \frac{g^2 e^2}{\beta}\Bigr) = \lambda K ,
     \]
-    so $\lambda = d/K$, which is \eqref{eq:split}. The value follows from
-    $\frac{\alpha}{2}x^2 + \frac{\beta}{2}(t/e)^2 = \frac{\lambda}{2}(wx + gt)
-      = \frac{\lambda d}{2} = d^2/(2K)$.
+    so $\lambda = d/K$, which is \eqref{eq:split}.
+    The value follows from $\frac{\alpha}{2}x^2 + \frac{\beta}{2}(t/e)^2 = \frac{\lambda}{2}(wx + gt) = \frac{\lambda d}{2} = d^2/(2K)$.
   \end{proof}
 
-  Two consequences are worth stating. First, the two distortions are used in the
-  fixed ratio
+  Two consequences are worth stating.
+  First, the two distortions are used in the fixed ratio
   \begin{equation}
-    \frac{g_i t_i}{(s_i - 1) w_i} \;=\; \frac{\alpha\, g_i^2 e_i^2}{\beta\, w_i^2}
-    \;\approx\; \frac{\alpha}{\beta} ,
+    \frac{g_i t_i}{(s_i - 1) w_i} \;=\; \frac{\alpha\, g_i^2 e_i^2}{\beta\, w_i^2} \;\approx\; \frac{\alpha}{\beta} ,
     \label{eq:ratio}
   \end{equation}
-  where the approximation uses $g_i e_i \approx w_i$ and is exact up to one
-  character. The width change is therefore split between tracking and scaling in
-  essentially the ratio $\alpha : \beta$, independently of $W$; the weights are
-  directly interpretable, and $\alpha = \beta = 1$ means ``half the correction
-  each''. Second, $C_i^\star$ is quadratic in $W$, which makes the outer problem
-  trivial.
+  where the approximation uses $g_i e_i \approx w_i$ and is exact up to one character.
+  The width change is therefore split between tracking and scaling in essentially the ratio $\alpha : \beta$, independently of $W$; the weights are directly interpretable, and $\alpha = \beta = 1$ means ``half the correction each''.
+  Second, $C_i^\star$ is quadratic in $W$, which makes the outer problem trivial.
 
   \subsection{The Optimal Common Width}
   \label{sec:width}
-
   \begin{proposition}[Optimal width]
     \label{prop:width}
-    The minimiser of $F(W) = \sum_i C_i^\star(W)$ is the stiffness-weighted mean
-    of the natural widths,
+    The minimiser of $F(W) = \sum_i C_i^\star(W)$ is the stiffness-weighted mean of the natural widths,
     \begin{equation}
       W^\star \;=\; \frac{\sum_{i=1}^{n} w_i / K_i}{\sum_{i=1}^{n} 1 / K_i},
       \label{eq:wstar}
@@ -249,51 +193,33 @@
   \end{proposition}
 
   \begin{proof}
-    By \eqref{eq:cstar}, $F(W) = \frac12 \sum_i (W - w_i)^2 / K_i$ is a strictly
-    convex quadratic in $W$ with $F''(W) = \sum_i K_i^{-1} > 0$. Setting
-    $F'(W) = \sum_i (W - w_i)/K_i = 0$ and solving for $W$ gives
-    \eqref{eq:wstar}.
+    By \eqref{eq:cstar}, $F(W) = \frac12 \sum_i (W - w_i)^2 / K_i$ is a strictly convex quadratic in $W$ with $F''(W) = \sum_i K_i^{-1} > 0$.
+    Setting $F'(W) = \sum_i (W - w_i)/K_i = 0$ and solving for $W$ gives \eqref{eq:wstar}.
   \end{proof}
 
   \begin{corollary}
-    $\min_i w_i \le W^\star \le \max_i w_i$, with equality only if all $w_i$
-    coincide.
+    $\min_i w_i \le W^\star \le \max_i w_i$, with equality only if all $w_i$ coincide.
   \end{corollary}
 
-  So the optimal target is neither the widest name, which would stretch everyone
-  else, nor the arithmetic mean width, but a mean that down-weights names that
-  are expensive to move. Since $K_i$ grows roughly like $w_i^2$, long names are
-  stiff, contribute little pull, and $W^\star$ is biased towards the short
-  names - correctly, because a short name pays the largest \emph{relative}
-  distortion for a given absolute change.
+  So the optimal target is neither the widest name, which would stretch everyone else, nor the arithmetic mean width, but a mean that down-weights names that are expensive to move.
+  Since $K_i$ grows roughly like $w_i^2$, long names are stiff, contribute little pull, and $W^\star$ is biased towards the short names - correctly, because a short name pays the largest \emph{relative} distortion for a given absolute change.
 
   \subsection{Feasibility and Clamping}
-
-  Unbounded $s_i$ and $t_i$ are typographically unacceptable, so we impose
-  $s_i \in [s_{\min}, s_{\max}]$, with defaults $0.85$ and $1.15$, and,
-  implicitly, $t_i \ge -e_i$, since letters must not overlap. The constrained
-  problem is still convex with a box constraint, and its solution is the
-  projection of the unconstrained one followed by re-solving the equality
-  constraint for the remaining free variable:
+  Unbounded $s_i$ and $t_i$ are typographically unacceptable, so we impose $s_i \in [s_{\min}, s_{\max}]$, with defaults $0.85$ and $1.15$, and, implicitly, $t_i \ge -e_i$, since letters must not overlap.
+  The constrained problem is still convex with a box constraint, and its solution is the projection of the unconstrained one followed by re-solving the equality constraint for the remaining free variable:
   \begin{equation}
-    \hat s_i = \operatorname{clamp}(s_i, s_{\min}, s_{\max}),
-    \qquad
-    \hat t_i = \frac{W^\star - \hat s_i w_i}{g_i}
+    \hat s_i = \operatorname{clamp}(s_i, s_{\min}, s_{\max}), \qquad \hat t_i = \frac{W^\star - \hat s_i w_i}{g_i}
     \label{eq:clamp}
   \end{equation}
-  for $g_i \ge 1$. This is exact rather than heuristic: with $s_i$ at a bound,
-  the objective is convex in the single remaining variable $t_i$, whose value is
-  then pinned by the width constraint. Single-character names ($g_i = 0$) have
-  no gaps to track and must take $s_i = W^\star / w_i$ regardless of the bounds;
-  the model degenerates gracefully rather than becoming infeasible.
+  for $g_i \ge 1$.
+  This projection is exact.
+  With $s_i$ at a bound, the objective is convex in the single remaining variable $t_i$, whose value is then pinned by the width constraint.
+  Single-character names ($g_i = 0$) have no gaps to track and must take $s_i = W^\star / w_i$ regardless of the bounds; the model degenerates gracefully and stays feasible.
 
   \section{Implementation}
   \label{sec:impl}
-
   \subsection{\LaTeX}
-
-  The package \texttt{equalauthors.sty} implements
-  \eqref{eq:stiffness}--\eqref{eq:clamp} in \texttt{expl3} floating point.
+  The package \texttt{equalauthors.sty} implements \eqref{eq:stiffness} to \eqref{eq:clamp} in \texttt{expl3} floating point.
   Names are collected with \verb|\equalauthorsAddAuthor|;
   \verb|\equalauthorsAuthors| then
 
@@ -302,101 +228,63 @@
     \item accumulates $\sum_i w_i/K_i$ and $\sum_i 1/K_i$ to obtain $W^\star$;
     \item solves \eqref{eq:split} and \eqref{eq:clamp} per name;
     \item sets each name as \verb|\scalebox{|$s_i$\verb|}[1]{\textls[|$\ell_i$%
-          \verb|]{|name\verb|}}|, where $\ell_i = 1000\,t_i/\mathrm{em}$ is the
-          tracking in microtype's units;
+          \verb|]{|name\verb|}}|, where $\ell_i = 1000\,t_i/\mathrm{em}$ is the tracking in microtype's units;
     \item overlaps the resulting boxes with \verb|\hbox_overlap_right:n| inside
           one box of width $W^\star$.
   \end{enumerate}
 
-  The name is never taken apart. An earlier version set each character in its
-  own box and counted characters to obtain $c_i$; this is hostile in three
-  independent ways. On 8-bit engines a UTF-8 character is several input tokens,
-  so splitting it breaks \texttt{inputenc}; an accent written as a command,
-  \verb|\"o|, is a control sequence plus its letter, so splitting it strips the
-  accent of its argument; and hand-set characters lose their kerning pairs, so
-  the measured $w_i$ no longer describes what is printed. Letterspacing is
-  therefore delegated to the font machinery, via microtype's \verb|\textls|,
-  and the two quantities the model needs are recovered by measurement instead
-  of by parsing:
+  The name is never taken apart.
+  An earlier version set each character in its own box and counted characters to obtain $c_i$; this is hostile in three independent ways.
+  On 8-bit engines a UTF-8 character is several input tokens, so splitting it breaks \texttt{inputenc}; an accent written as a command, \verb|\"o|, is a control sequence plus its letter, so splitting it strips the accent of its argument; and hand-set characters lose their kerning pairs, so the measured $w_i$ no longer describes what is printed.
+  Letterspacing is therefore delegated to the font machinery, via microtype's \verb|\textls|, and the two quantities the model needs are recovered by measurement instead of by parsing:
   \begin{equation}
-    w_i = W_i(1, 0),
-    \qquad
-    g_i = \frac{\partial W_i}{\partial t_i}
-    = \frac{W_i(1, \mathrm{em}) - W_i(1, 0)}{\mathrm{em}} .
+    w_i = W_i(1, 0), \qquad g_i = \frac{\partial W_i}{\partial t_i} = \frac{W_i(1, \mathrm{em}) - W_i(1, 0)}{\mathrm{em}} .
     \label{eq:measure}
   \end{equation}
-  Since \eqref{eq:width} is affine in $t_i$, the difference quotient in
-  \eqref{eq:measure} is exact, and two \verb|\hbox_set:Nn| measurements per
-  name suffice. The character count enters only through $c_i = g_i + 1$ in
-  $e_i = w_i/c_i$, so it too comes from \eqref{eq:measure} and no notion of
-  ``character'' has to be committed to. The companion command
+  Since \eqref{eq:width} is affine in $t_i$, the difference quotient in \eqref{eq:measure} is exact, and two \verb|\hbox_set:Nn| measurements per name suffice.
+  The character count enters only through $c_i = g_i + 1$ in $e_i = w_i/c_i$, so it too comes from \eqref{eq:measure} and no notion of ``character'' has to be committed to.
+  The companion command
   \verb|\equalauthorsAuthorsStacked| prints the same distorted names one per
   line, which is how one verifies equal width by eye.
 
-  Microtype expresses tracking in whole thousandths of an em, so $\ell_i$ is
-  rounded and $t_i$ is quantised. The residual is not dropped: $s_i$ is
-  recomputed from the quantised $t_i$ as $s_i = (W^\star - g_i t_i)/w_i$, which
-  is the same projection argument as \eqref{eq:clamp} with the roles of the two
-  variables exchanged, so the realised width remains exactly $W^\star$ while
-  $s_i$ moves by less than $10^{-3}$. Weights and bounds are
-  set with
+  Microtype expresses tracking in whole thousandths of an em, so $\ell_i$ is rounded and $t_i$ is quantised.
+  The residual is not dropped: $s_i$ is recomputed from the quantised $t_i$ as $s_i = (W^\star - g_i t_i)/w_i$, which is the same projection argument as \eqref{eq:clamp} with the roles of the two variables exchanged, so the realised width remains exactly $W^\star$ while $s_i$ moves by less than $10^{-3}$.
+  Weights and bounds are set with
   \begin{quote}
     \small\verb|\equalauthorsSetup{alpha=1, beta=1,|\\
     \small\verb|                   smin=0.85, smax=1.15}|
   \end{quote}
 
   \subsection{Citations}
-
-  A reference list ranks authors exactly as a title page does, so the standard
-  is only self-consistent if citations are superimposed as well. The command
+  A reference list ranks authors exactly as a title page does, so the standard is only self-consistent if citations are superimposed as well.
+  The command
   \verb|\equalauthorsList| takes a BibTeX-style name list
-  \texttt{A and B and C}, splits it on \texttt{and}, and applies
-  \eqref{eq:wstar} and \eqref{eq:split} to the result. No bibliography style
-  has to be patched: the macro is placed in the \texttt{author} field of the
-  \texttt{.bib} entry inside an extra pair of braces,
+  \texttt{A and B and C}, splits it on \texttt{and}, and applies \eqref{eq:wstar} and \eqref{eq:split} to the result.
+  No bibliography style has to be patched.
+  The macro is placed in the \texttt{author} field of the \texttt{.bib} entry inside an extra pair of braces,
   \begin{quote}
     \small\verb|author = {{\equalauthorsList{Erik D.|\\
     \small\verb|         Demaine and Martin L. Demaine}}}|
   \end{quote}
-  which hides the \texttt{and} separators from biber and makes it pass the
-  field through verbatim. The reference to the original
-  paper~\cite{demaine2023every} in this document is typeset this way. Its
-  common width $W^\star$ is computed over the two cited names alone, since
-  equal width is a property of one name list and not a global constant.
+  which hides the \texttt{and} separators from biber and makes it pass the field through verbatim.
+  The reference to the original paper~\cite{demaine2023every} in this document is typeset this way.
+  Its common width $W^\star$ is computed over the two cited names alone, since equal width is a property of one name list, never a global constant.
 
   \subsection{Typst}
+  The Typst package exposes the same functions, \texttt{optimal-width}, \texttt{solve}, \texttt{eqa-authors} and the name-list form \texttt{eqa-list}, using \texttt{measure} inside a \texttt{context} block for $w_i$, \texttt{scale(x: ..., reflow: true)} for $s_i$, and the \texttt{text(tracking: ...)} parameter for $t_i$.
+  Grapheme clusters are a native notion there, so the encoding difficulties of Section~\ref{sec:impl} do not arise and $g_i$ is counted directly.
+  Because Typst applies tracking inside the scaled coordinate frame, the tracking handed to the engine is $t_i / s_i$; the realised width is then $s_i w_i + g_i t_i$ as in \eqref{eq:width}.
+  A self-check compiles the distorted names and asserts that every measured width equals $W^\star$ to within $10^{-4}$\,pt.
 
-  The Typst package exposes the same functions,
-  \texttt{optimal-width}, \texttt{solve}, \texttt{eqa-authors} and the name-list
-  form \texttt{eqa-list}, using
-  \texttt{measure} inside a \texttt{context} block for $w_i$,
-  \texttt{scale(x: ..., reflow: true)} for $s_i$, and the
-  \texttt{text(tracking: ...)} parameter for $t_i$. Grapheme clusters are a native notion there, so
-  the encoding difficulties of Section~\ref{sec:impl} do not arise and $g_i$
-  is counted directly. Because Typst applies
-  tracking inside the scaled coordinate frame, the tracking handed to the engine
-  is $t_i / s_i$; the realised width is then $s_i w_i + g_i t_i$ as in
-  \eqref{eq:width}. A self-check compiles the distorted names and asserts that
-  every measured width equals $W^\star$ to within $10^{-4}$\,pt.
-
-  Bibliographies need a different hook there. Typst renders references through
-  a CSL style and exposes no element for the author list of an entry, so there
-  is nothing to attach a \texttt{show} rule to. The hook is therefore moved into
-  the citation style itself: \texttt{equalauthors.csl} is an ordinary numeric
-  style whose only peculiarity is that it fences each entry's author list
-  between two invisible \textsc{u+2062} characters, and the accompanying
-  \texttt{equal-references} show rule matches exactly those runs and replaces
-  them with the superimposed list. The style does the name formatting and the
-  numbering as usual; the rule never has to guess where a name begins.
+  Bibliographies need a different hook there.
+  Typst renders references through a CSL style and exposes no element for the author list of an entry, so there is nothing to attach a \texttt{show} rule to.
+  The hook is therefore moved into the citation style itself: \texttt{equalauthors.csl} is an ordinary numeric style whose only peculiarity is that it fences each entry's author list between two invisible \textsc{u+2062} characters, and the accompanying \texttt{equal-references} show rule matches exactly those runs and replaces them with the superimposed list.
+  The style does the name formatting and the numbering as usual; the rule never has to guess where a name begins.
 
   \section{Results}
   \label{sec:results}
-
-  The author block of this paper is an equal-width superimposition of its three
-  authors. Table~\ref{tab:results} reports the solution at
-  $\alpha = \beta = 1$ for a five-name example that adds the originators of the
-  standard, and Figure~\ref{fig:stacked} unstacks the same five names so that
-  the common width can be checked by eye.
+  The author block of this paper is an equal-width superimposition of its three authors.
+  Table~\ref{tab:results} reports the solution at $\alpha = \beta = 1$ for a five-name example that adds the originators of the standard, and Figure~\ref{fig:stacked} unstacks the same five names so that the common width can be checked by eye.
 
   \equalauthorsClear
   \equalauthorsAddAuthor{Peter Waldert}
@@ -418,42 +306,30 @@
       Martin L. Demaine & \equalauthorsSolution{Martin L. Demaine}                      \\
       \bottomrule
     \end{tabular}
-    \caption{Natural widths and optimal distortions at
-      $W^\star = \equalauthorsWidth$\,pt. Names shorter than $W^\star$
-      receive $s_i > 1$ and $t_i > 0$; longer names receive both below
-      their neutral values.}
+    \caption{Natural Widths and Optimal Distortions at $W^\star = \equalauthorsWidth$\,pt.
+      Names shorter than $W^\star$ receive $s_i > 1$ and $t_i > 0$; longer names receive both below their neutral values.}
     \label{tab:results}
   \end{table}
 
   \begin{figure}[t]
     \centering
     \equalauthorsAuthorsStacked
-    \caption{The five names of Table~\ref{tab:results}, distorted and printed
-      separately. All five lines have width $W^\star$.}
+    \caption{The Five Names of Table~\ref{tab:results}, Distorted and Printed Separately.
+      All five lines have width $W^\star$.}
     \label{fig:stacked}
   \end{figure}
 
   \section{Limitations}
-
-  The cost \eqref{eq:cost} is a model of ugliness, not a measurement of it. It
-  is symmetric in the sign of the distortion, whereas readers tolerate loose
-  tracking better than tight tracking, and condensed glyphs better than expanded
-  ones; asymmetric weights $\alpha^\pm,\beta^\pm$ would leave the convexity
-  argument unchanged. Vertical extent is likewise creditable and left
-  untouched: names with ascenders and descenders still claim more ink. Finally,
-  the standard equalises typography, not contribution; nothing here prevents a
-  coauthor from doing all the work.
+  The cost \eqref{eq:cost} models ugliness; it does not measure it.
+  It is symmetric in the sign of the distortion, whereas readers tolerate loose tracking better than tight tracking, and condensed glyphs better than expanded ones; asymmetric weights $\alpha^\pm,\beta^\pm$ would leave the convexity argument unchanged.
+  Vertical extent is likewise creditable and left untouched, since names with ascenders and descenders still claim more ink.
+  Finally, the standard equalises typography, not contribution; nothing here prevents a coauthor from doing all the work.
 
   \section{Conclusion}
-
-  Superimposing author names removes order but not width. Requiring equal width
-  turns the layout into a small convex program whose solution is fully explicit:
-  the split between glyph scaling and tracking is the ratio $\alpha : \beta$ of
-  the two ugliness weights (Proposition~\ref{prop:split}), and the common width
-  is the stiffness-weighted mean \eqref{eq:wstar} of the natural widths
-  (Proposition~\ref{prop:width}). Both are one line of arithmetic per name, so
-  every author can be a first author of exactly the same size at no measurable
-  cost in compile time.
+  Superimposing author names removes order but not width.
+  Requiring equal width turns the layout into a small convex program whose solution is fully explicit.
+  The split between glyph scaling and tracking is the ratio $\alpha : \beta$ of the two ugliness weights (Proposition~\ref{prop:split}), and the common width is the stiffness-weighted mean \eqref{eq:wstar} of the natural widths (Proposition~\ref{prop:width}).
+  Both are one line of arithmetic per name, so every author can be a first author of exactly the same size at no measurable cost in compile time.
 
   \printbibliography
 
