@@ -30,6 +30,7 @@
 .~lock*
 __pycache__/
 _minted-*
+*.minted
 target/
 /.venv
 feedback.pdf
@@ -46,3 +47,6 @@ tinymist.lock
 *.mov
 *.xges
 *.wav
+
+# Lean
+.lake/
