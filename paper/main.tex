@@ -28,6 +28,17 @@
 \theoremstyle{definition}
 \newtheorem{definition}[proposition]{Definition}
 
+\newcommand{\equalAuthorsTest}{
+  % \equalauthorsAddAuthor{Liu Yu} % REALLY BAD
+  \equalauthorsAddAuthor{Peter Waldert}
+  \equalauthorsAddAuthor{Benedikt Kantz}
+  \equalauthorsAddAuthor{Thomas K\"ohler}
+  \equalauthorsAddAuthor{Erik D. Demaine}
+  \equalauthorsAddAuthor{Martin L. Demaine}
+  \equalauthorsAddAuthor{Jesu\'s Salvador Mart\'inez Alcaide} % also not great but ok
+}
+
+
 \equalauthorsSetup{alpha=1, beta=1, smin=0.85, smax=1.15}
 \equalauthorsAddAuthor{Peter Waldert}
 \equalauthorsAddAuthor{Benedikt Kantz}
@@ -305,11 +316,7 @@ The author block of this paper is an equal-width superimposition of its three au
 Table~\ref{tab:results} reports the solution at $\alpha = \beta = 1$ for a five-name example that adds the originators of the standard, and Figure~\ref{fig:stacked} unstacks the same five names so that the common width can be checked by eye.
 
 \equalauthorsClear
-\equalauthorsAddAuthor{Peter Waldert}
-\equalauthorsAddAuthor{Benedikt Kantz}
-\equalauthorsAddAuthor{Thomas K\"ohler}
-\equalauthorsAddAuthor{Erik D. Demaine}
-\equalauthorsAddAuthor{Martin L. Demaine}
+\equalAuthorsTest
 
 \begin{table}[t]
   \centering
@@ -356,45 +363,70 @@ Both are one line of arithmetic per name, so every author can be a first author 
 \subsection{Allowing only free scaling}
 Changing just the character scale $s$, i.e. setting $t=0$ across names and not introducing further splits reduces complexity at the cost of ugliness.
 
-The distortion width (per name) in this setting reduces to \[
+The distortion width (per name) in this setting reduces to $
   \omega(s) = s w,
-\]
+$
 the cost of a name to \[
   C(s) =\frac{1}{2} (s-1)^2,
 \]
 by which the Lagrangian simplifies to \[
   L =\frac{1}{2}x^2 - \lambda (wx-d).
 \]
-The stationarity gives $x=\lambda w$, which, when substituted into the constraints yields \[
+The stationarity gives $x=\lambda w$, which, when substituted into the constraints yields $
   d=wx =\lambda w^2,
-\]
+$
 turning into the simplified optimal cost \[
   C*(s) = x^2 = \frac{(W-w)^2}{w^2},
 \]
-i.e. $K=w^2$. The common width can then be computed as in the general case.
+i.e. $K=w^2$. The common width can then be computed as in the general case. Figure~\ref{fig:stacked:fixed_t} shows the problems when using fixed inter-character spacing: the names seems squished unevenly.
+
+\equalauthorsSetup{alpha=1, beta=1, smin=0.85, smax=1.15, fix_t=true}
+\equalauthorsClear
+\equalAuthorsTest
+
+
+\begin{figure}[t]
+  \centering
+  \equalauthorsAuthorsStacked
+  \caption{The Five Names of Table~\ref{tab:results}, Distorted and Printed Separately, but for fixed $t=0$
+    All five lines have width $W^\star$.}
+  \label{fig:stacked:fixed_t}
+\end{figure}
 
 
 \subsection{Allowing only kerning changes}
 
 Enabling just kerning changes $t$, i.e. setting $s=1$ across names, similarly shows the how the reduction in complexity increases ugliness.
 
-The distortion width (per name) in the $s=1$ case reduces to \[
+The distortion width (per name) in the $s=1$ case reduces to $
   \omega(s) = gt,
-\]
+$
 the cost of a name to \[
   C(s) =\frac{1}{2} (\frac{g}{t})^2,
 \]
 by which the Lagrangian simplifies to \[
   L =\frac{1}{2}\frac{g^2}{t^2} - \lambda (gt-d).
 \]
-The stationarity gives $t/e^2=\lambda g$, which, when substituted into the constraints yields \[
+The stationarity gives $t/e^2=\lambda g$, which, when substituted into the constraints yields $
   d= gt =\lambda g^2 e^2,
-\]
+$
 turning into the simplified optimal cost \[
   C*(s) = x^2 = \frac{(W-w)^2}{g^2 e^2},
 \]
-i.e. $K=g^2 e^2$. The common width is, again, computed the same way.
+i.e. $K=g^2 e^2$. The common width is, again, computed the same way. Setting the scaling constant reveals even more problematic issues through Figure~\ref{fig:stacked:fixed_s}, as inter-character spacing has to compensate for all width changes.
 
 
+\equalauthorsSetup{alpha=1, beta=1, smin=0.85, smax=1.15, fix_s=true}
+\equalauthorsClear
+\equalAuthorsTest
+
+
+\begin{figure}[t]
+  \centering
+  \equalauthorsAuthorsStacked
+  \caption{The Five Names of Table~\ref{tab:results}, Distorted and Printed Separately, but for fixed $s=1$
+    All five lines have width $W^\star$.}
+  \label{fig:stacked:fixed_s}
+\end{figure}
 
 \end{document}
