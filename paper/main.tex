@@ -481,6 +481,12 @@
   The cost \eqref{eq:cost} models ugliness; it does not measure it.
   It is symmetric in the sign of the distortion, whereas readers tolerate loose tracking better than tight tracking, and condensed glyphs better than expanded ones; asymmetric weights $\alpha^\pm,\beta^\pm$ would leave the convexity argument unchanged.
   Vertical extent is likewise creditable and left untouched, since names with ascenders and descenders still claim more ink.
+
+  We also skip opacity, which the original construction uses.
+  \citeauthor{demaine2023every}~\cite{demaine2023every} set every name in semi-transparent ink, at opacity $2/3$, so that the superimposed names do not merge into a solid black block, and overlapping strokes appear darker, which keeps the individual names legible.
+  We print all names at full opacity.
+  Combining the two is promising future work, in particular an opacity that decreases with the number of authors, as \citeauthor{demaine2023every} suggest, since the block grows darker with every name that is added.
+
   Finally, the standard equalises typography, not contribution; nothing here prevents a coauthor from doing all the work.
 
   \section{Conclusion}
