@@ -3,6 +3,7 @@
 \setlength{\columnsep}{0.6cm}
 \usepackage{amsmath, amssymb, amsthm}
 \usepackage{booktabs}
+\usepackage{typst}    % embeds and compiles Typst/CeTZ figures inline
 \usepackage{minted}   % needs pdflatex -shell-escape (Overleaf: on by default)
 \setminted{fontsize=\small, breaklines=true, autogobble=true}
 \newmintinline[tex]{latex}{}
@@ -32,6 +33,7 @@
 \equalauthorsAddAuthor{Peter Waldert}
 \equalauthorsAddAuthor{Benedikt Kantz}
 \equalauthorsAddAuthor{Thomas Köhler}
+\equalauthorsAddAuthor{Martin Tritthart}
 
 \title{Truly Every Author is First Author: Equal-Width Superimposition by Minimising Visual Distortion}
 \author{\equalauthorsAuthors}
@@ -197,8 +199,51 @@
     \label{eq:ratio}
   \end{equation}
   where the approximation uses $g e \approx w$ and is exact up to one character.
-  The width change is therefore split between tracking and scaling in essentially the ratio $\alpha : \beta$, independently of $W$; the weights are directly interpretable, and $\alpha = \beta = 1$ means ``half the correction each''.
+  The width change is therefore split between tracking and scaling in essentially the ratio $\alpha : \beta$, independently of $W$, as Figure~\ref{fig:split} shows; the weights are directly interpretable, and $\alpha = \beta = 1$ means ``half the correction each''.
   Second, $C^\star$ is quadratic in $W$, which makes the outer problem trivial.
+
+  \begin{figure}[t]
+    \centering
+    \begin{typst}{width=\columnwidth}
+      #import "@preview/cetz:0.4.0"
+      #import "@preview/cetz-plot:0.1.2": plot
+      #set text(8pt)
+
+      // Cost of splitting a fixed width deficit d between scaling (share phi) and
+      // tracking (share 1 - phi), in units of d^2 / (2 w^2), for three weightings.
+      #let cost(a, b, phi) = a * phi * phi + b * (1 - phi) * (1 - phi)
+
+      #cetz.canvas({
+      import cetz.draw: *
+      plot.plot(
+      size: (4.6, 2.6),
+      x-label: [share $phi$ taken by scaling], y-label: [cost],
+      x-min: 0, x-max: 1, y-min: 0, y-max: 4.4,
+      x-tick-step: 0.25, y-tick-step: 1, y-minor-tick-step: none,
+      legend: "inner-north", legend-style: (stroke: none, fill: white.transparentize(15%)),
+      {
+          for (a, b, col, lbl) in (
+          (1.0, 4.0, blue,  $beta\/alpha = 4$),
+          (1.0, 1.0, black, $beta\/alpha = 1$),
+          (4.0, 1.0, red,   $beta\/alpha = 1\/4$),
+          ) {
+              plot.add(domain: (0, 1), samples: 60, style: (stroke: col), label: lbl,
+              phi => cost(a, b, phi))
+              let ph = b / (a + b)
+              plot.add(((ph, cost(a, b, ph)),), mark: "o",
+              mark-style: (fill: col, stroke: none), mark-size: 0.14)
+            }
+        },
+      )
+      })
+    \end{typst}
+    \caption{The Cost of Splitting a Fixed Width Deficit.
+      The share $\phi$ of the deficit taken by scaling costs
+      $\alpha \phi^2 + \beta (1-\phi)^2$ in units of $d^2/2w^2$, and the minimum
+      (dot) sits at $\phi^\star = \beta/(\alpha+\beta)$, so the weights set the
+      split and nothing else does.}
+    \label{fig:split}
+  \end{figure}
 
   \subsection{The Optimal Common Width}
   \label{sec:width}
@@ -222,7 +267,65 @@
   \end{corollary}
 
   So the optimal target is neither the widest name, which would stretch everyone else, nor the arithmetic mean width, but a mean that down-weights names that are expensive to move.
+  Figure~\ref{fig:width} shows the mechanism.
   Since $K_i$ grows roughly like $w_i^2$, long names are stiff, contribute little pull, and $W^\star$ is biased towards the short names - correctly, because a short name pays the largest \emph{relative} distortion for a given absolute change.
+
+  \begin{figure}[t]
+    \centering
+    \begin{typst}{width=\columnwidth}
+      #import "@preview/cetz:0.4.0"
+      #import "@preview/cetz-plot:0.1.2": plot
+      #set text(8pt)
+
+      // Five names, given by natural width w and character count c.
+      #let names = ((66.0, 13), (70.0, 14), (68.0, 13), (78.0, 15), (88.0, 17))
+      #let alpha = 1.0
+      #let beta = 1.0
+      #let stiff(w, c) = {
+      let e = w / c
+      let g = c - 1
+      w * w / alpha + g * g * e * e / beta
+      }
+      #let ks = names.map(((w, c)) => stiff(w, c))
+      #let ws = names.map(((w, c)) => w)
+      #let wstar = ws.zip(ks).map(((w, k)) => w / k).sum() / ks.map(k => 1.0 / k).sum()
+      #let ci(i, W) = calc.pow(W - ws.at(i), 2) / (2 * ks.at(i))
+      #let f(W) = range(ws.len()).map(i => ci(i, W)).sum()
+
+      #cetz.canvas({
+      import cetz.draw: *
+      plot.plot(
+      size: (4.6, 2.6),
+      x-label: [common width $W$ [pt]], y-label: [cost],
+      x-min: 62, x-max: 92, y-min: 0, y-max: 0.16,
+      x-tick-step: 10, y-tick-step: 0.05, y-minor-tick-step: none,
+      legend: "inner-north-west", legend-style: (stroke: none),
+      {
+          for i in range(ws.len()) {
+              plot.add(domain: (62, 92), samples: 60, style: (stroke: gray + 0.4pt),
+              label: if i == 0 { $C^star_i$ } else { none }, W => ci(i, W))
+              plot.add(((ws.at(i), 0),), mark: "o", mark-size: 0.1,
+              mark-style: (fill: gray, stroke: none))
+            }
+          plot.add(domain: (62, 92), samples: 80, style: (stroke: black + 1pt), label: $F$, f)
+          plot.add(((wstar, 0), (wstar, f(wstar))),
+          style: (stroke: (paint: red, dash: "dashed", thickness: 0.6pt)))
+          plot.add(((wstar, f(wstar)),), mark: "o", mark-size: 0.14,
+          mark-style: (fill: red, stroke: none))
+          plot.annotate({
+              content((wstar + 0.7, f(wstar) + 0.025), text(fill: red)[$W^star$], anchor: "west")
+            })
+        },
+      )
+      })
+    \end{typst}
+    \caption{Choosing the Common Width for Five Names.
+      Each name contributes a parabola $C^\star_i$ whose vertex sits at its
+      natural width $w_i$ (grey dots) and whose curvature is $1/K_i$, so stiff
+      names pull weakly.
+      The total $F$ is minimised at $W^\star$.}
+    \label{fig:width}
+  \end{figure}
 
   \subsection{Feasibility and Clamping}
   Unbounded $s_i$ and $t_i$ are typographically unacceptable, so we impose $s_i \in [s_{\min}, s_{\max}]$, with defaults $0.85$ and $1.15$, and, implicitly, $t_i \ge -e_i$, since letters must not overlap.

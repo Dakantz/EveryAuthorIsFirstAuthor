@@ -50,3 +50,8 @@ tinymist.lock
 
 # Lean
 .lake/
+
+# typst.sty build intermediates
+paper/main-*.*
+paper/typst_dedent.awk
+paper/typst_premble.typ

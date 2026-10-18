@@ -12,17 +12,31 @@
 #set page(width: auto, height: auto, margin: 0em)
 \end{filecontents*}
 
+% Strip the common leading indentation from the embedded source, so that a
+% typst environment may be indented along with the LaTeX around it.
+\begin{filecontents*}[overwrite]{typst_dedent.awk}
+{ line[NR] = $0
+  if ($0 ~ /[^ \t]/) {
+    match($0, /^[ \t]*/)
+    if (!seen || RLENGTH < m) { m = RLENGTH; seen = 1 }
+  }
+}
+END { for (i = 1; i <= NR; i++) print substr(line[i], m + 1) }
+\end{filecontents*}
+
 \NewDocumentEnvironment{typst}{m}{%
     \stepcounter{@typstsrc}
     \def\@typstfn{\jobname-\the@typstsrc}%
     \csname filecontents*\endcsname[overwrite]{\@typstfn.raw}%
     \def\@abstypstfn{$TEXMF_OUTPUT_DIRECTORY/\@typstfn}%
-    \def\@abspremblefn{$TEXMF_OUTPUT_DIRECTORY/typst_premble.typ}%
+    \def\@abspremblefn{$TEXMF_OUTPUT_DIRECTORY/typst_premble.typ}
+    \def\@absdedentfn{$TEXMF_OUTPUT_DIRECTORY/typst_dedent.awk}%
 }{%
     \csname endfilecontents*\endcsname%
     \IfFileExists{\@typstfn.raw}{%
         % generate the file to be compiled
-        \immediate\write18{echo "// flags: \typstflags\\n" | cat - \@abstypstfn.flags \@abspremblefn \@space \@abstypstfn.raw > \@abstypstfn.typ}
+        \immediate\write18{echo "// flags: \typstflags\\n" | cat - \@abstypstfn.flags \@abspremblefn > \@abstypstfn.typ}
+        \immediate\write18{awk -f \@absdedentfn \@space \@abstypstfn.raw >> \@abstypstfn.typ}
         % compute md5 hash of the file
         \immediate\write18{md5sum \@abstypstfn.typ > \@abstypstfn.new.md5}
         % check md5 match, generate .changed file if not matched

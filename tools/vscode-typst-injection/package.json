@@ -1,0 +1,19 @@
+{
+  "name": "latex-typst-injection",
+  "displayName": "Typst inside LaTeX",
+  "description": "Highlights the body of \\begin{typst} ... \\end{typst} as Typst.",
+  "version": "0.0.1",
+  "publisher": "local",
+  "engines": { "vscode": "^1.80.0" },
+  "categories": ["Programming Languages"],
+  "contributes": {
+    "grammars": [
+      {
+        "scopeName": "latex.typst.injection",
+        "path": "./typst-injection.json",
+        "injectTo": ["text.tex.latex"],
+        "embeddedLanguages": { "meta.embedded.block.typst": "typst" }
+      }
+    ]
+  }
+}
