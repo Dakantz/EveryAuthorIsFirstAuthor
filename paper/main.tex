@@ -36,7 +36,7 @@
   \equalauthorsAddAuthor{Thomas K\"ohler}
   \equalauthorsAddAuthor{Erik D. Demaine}
   \equalauthorsAddAuthor{Martin L. Demaine}
-  \equalauthorsAddAuthor{Jesu\'s Salvador Mart\'inez Alcaide} % also not great but ok
+  \equalauthorsAddAuthor{Jes\'us Salvador Mart\'inez Alcaide} % also not great but ok
 }
 
 
@@ -414,8 +414,12 @@
 
   \section{Results}
   \label{sec:results}
-  The author block of this paper is an equal-width superimposition of its three authors.
-  Table~\ref{tab:results} reports the solution at $\alpha = \beta = 1$ for a five-name example that adds the originators of the standard, and Figure~\ref{fig:stacked} unstacks the same five names so that the common width can be checked by eye.
+  The author block of this paper is an equal-width superimposition of its four authors.
+  Table~\ref{tab:results} reports the solution at $\alpha = \beta = 1$ for a six-name example that adds the originators of the standard and one long name, and Figure~\ref{fig:stacked} unstacks the same six names so that the common width can be checked by eye.
+
+  The long name, Jes\'us Salvador Mart\'inez Alcaide, is about twice as wide as any other, yet it barely moves $W^\star$: its stiffness grows like $w_i^2$, so it pulls with roughly a quarter of the weight of the others.
+  Its unconstrained scale falls below $s_{\min}$, so it is the one name for which the clamp \eqref{eq:clamp} is active, and tracking absorbs the remainder.
+  The resulting $t_i$ is negative but stays well above the overlap bound $-e_i$, so the name is condensed and tightly set, not illegible.
 
   \equalauthorsClear
   \equalAuthorsTest
@@ -431,6 +435,7 @@
       Thomas K\"ohler   & \equalauthorsSolution{Thomas K\"ohler}                        \\
       Erik D. Demaine   & \equalauthorsSolution{Erik D. Demaine}                        \\
       Martin L. Demaine & \equalauthorsSolution{Martin L. Demaine}                      \\
+      Jes\'us S. M. A.  & \equalauthorsSolution{Jes\'us Salvador Mart\'inez Alcaide}   \\
       \bottomrule
     \end{tabular}
     \caption{Natural Widths and Optimal Distortions at $W^\star = \equalauthorsWidth$\,pt.
@@ -441,8 +446,8 @@
   \begin{figure}[t]
     \centering
     \equalauthorsAuthorsStacked
-    \caption{The Five Names of Table~\ref{tab:results}, Distorted and Printed Separately.
-      All five lines have width $W^\star$.}
+    \caption{The Six Names of Table~\ref{tab:results}, Distorted and Printed Separately.
+      All six lines have width $W^\star$.}
     \label{fig:stacked}
   \end{figure}
 
@@ -489,8 +494,8 @@
   \begin{figure}[t]
     \centering
     \equalauthorsAuthorsStacked
-    \caption{The Five Names of Table~\ref{tab:results}, Distorted and Printed Separately, but for fixed $t=0$
-      All five lines have width $W^\star$.}
+    \caption{The Six Names of Table~\ref{tab:results}, Distorted and Printed Separately, but for fixed $t=0$
+      All six lines have width $W^\star$.}
     \label{fig:stacked:fixed_t}
   \end{figure}
 
@@ -522,8 +527,8 @@
   \begin{figure}[t]
     \centering
     \equalauthorsAuthorsStacked
-    \caption{The Five Names of Table~\ref{tab:results}, Distorted and Printed Separately, but for fixed $s=1$
-      All five lines have width $W^\star$.}
+    \caption{The Six Names of Table~\ref{tab:results}, Distorted and Printed Separately, but for fixed $s=1$
+      All six lines have width $W^\star$.}
     \label{fig:stacked:fixed_s}
   \end{figure}
 \end{document}
