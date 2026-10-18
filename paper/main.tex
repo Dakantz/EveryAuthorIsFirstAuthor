@@ -39,7 +39,6 @@
   \equalauthorsAddAuthor{Jes\'us Salvador Mart\'inez Alcaide} % also not great but ok
 }
 
-
 \equalauthorsSetup{alpha=1, beta=1, smin=0.85, smax=1.15}
 \equalauthorsAddAuthor{Peter Waldert}
 \equalauthorsAddAuthor{Benedikt Kantz}
@@ -65,6 +64,7 @@
             Each name is distorted by two knobs, a horizontal glyph scale and an inter-letter tracking, until all names occupy one common width $W$.
             We give a quadratic distortion model, solve the per-name trade-off in closed form by Lagrange multipliers, and show that the total-distortion optimal common width is a stiffness-weighted mean of the natural widths.
             We provide implementations as a \LaTeX{} package and a Typst package, covering author blocks and bibliography entries alike; this paper typesets its own author block and its own reference with the former.
+            Every proposition is machine-checked in Lean.
           \end{abstract}
         \end{minipage}
       \end{center}
@@ -76,6 +76,8 @@
   \section{Introduction}
   The convention that author order encodes credit is a lossy encoding of a partial order into a total one.
   \citeauthor{demaine2023every} \cite{demaine2023every} resolve it by making the encoding degenerate, superimposing all author names at the same position, so that no name precedes another.
+  AMOR~\cite{weiherer2024amor} takes the opposite route and keeps the list, but shuffles it at random whenever it is viewed, so that no order is fixed.
+  This removes the ranking across views but not within any single one, where some name still comes first; superimposition removes it in every view, and is the construction we build on.
 
   Superimposition removes the horizontal ordering but not the horizontal \emph{extent}.
   If Xu Li and Martin L.~Demaine are overprinted, the shorter name is contained in the longer one, and the reader's eye recovers a ranking from ink coverage, where the widest name frames the block and the narrowest hides inside it.
@@ -89,7 +91,7 @@
   The engineering question is how to divide a required width change between them, and what common width to aim at in the first place.
 
   Sections~\ref{sec:model} and~\ref{sec:solution} answer both in closed form.
-  Section~\ref{sec:impl} describes the implementations and Section~\ref{sec:results} the resulting numbers.
+  Section~\ref{sec:impl} describes the implementations, the figures and a machine-checked proof of every claim, and Section~\ref{sec:results} the resulting numbers.
 
   \section{Problem Statement}
   \label{sec:model}
@@ -412,6 +414,30 @@
   The hook is therefore moved into the citation style itself: \code|equalauthors.csl| is an ordinary numeric style whose only peculiarity is that it fences each entry's author list between two invisible \textsc{u+2062} characters, and the accompanying \code|equal-references| show rule matches exactly those runs and replaces them with the superimposed list.
   The style does the name formatting and the numbering as usual; the rule never has to guess where a name begins.
 
+  \subsection{Figures}
+  Figures~\ref{fig:split} and~\ref{fig:width} are drawn with the CeTZ plotting library for Typst\footnote{\url{https://github.com/cetz-package/cetz}}, although the paper itself is typeset with \LaTeX.
+  A small package, \code|typst.sty|, writes the body of each \code|typst| environment to a file, compiles it with \code|typst compile| through shell escape, and includes the resulting PDF, recompiling only when the source has changed.
+  The plots read no precomputed data but evaluate the model themselves.
+  Figure~\ref{fig:split} plots the cost of dividing a deficit between the two distortions, whose minimum is the split of Proposition~\ref{prop:split}, and Figure~\ref{fig:width} computes $K_i$ by \eqref{eq:stiffness}, $C^\star_i$ by \eqref{eq:cstar} and $W^\star$ by \eqref{eq:wstar} from five pairs of natural width and character count.
+  The figure sources are therefore a third implementation of the closed form, next to the two packages.
+
+  \subsection{Formal Verification}
+  \label{sec:lean}
+  Every mathematical claim of Sections~\ref{sec:model} to~\ref{sec:impl} is machine-checked in Lean~4~\cite{demoura2021lean4} against Mathlib~\cite{mathlib2020}, in the file \code|lean/EqualAuthors.lean| of the accompanying repository, which contains no \code|sorry|.
+  A name is a structure carrying $w > 0$ and $g \in \mathbb{N}$, every other quantity is a real number, and each theorem is named after the label of the equation or proposition it proves, so that \code|prop_split|, \code|eq_cstar| or \code|prop_width| lead from the text to the proof and back.
+  The formalisation covers
+  \begin{itemize}
+    \item Proposition~\ref{prop:split} with uniqueness, the optimal value \eqref{eq:cstar}, and the ratio \eqref{eq:ratio} in its exact form;
+    \item Proposition~\ref{prop:width} with uniqueness, and its corollary including the equality case;
+    \item the joint optimality of $W^\star$ and \eqref{eq:split} for the full problem \eqref{eq:problem}, which composes the two stages;
+    \item the exactness of the projection \eqref{eq:clamp}, and feasibility for $g_i = 0$;
+    \item the implementation identities: the measurement \eqref{eq:measure}, the exact width after quantised tracking, and the $t_i/s_i$ correction for Typst's scaled frame;
+    \item the claim of the introduction that superimposed names of different width contain one another, and that names of equal width cover exactly the same extent.
+  \end{itemize}
+  The proofs need no Lagrange multipliers.
+  Both optimality results follow from exact identities: along the constraint, the cost of any $(s,t)$ exceeds that of the split $(s^\star, t^\star)$ of \eqref{eq:split} by $\frac{\alpha}{2}(s - s^\star)^2 + \frac{\beta}{2}\bigl((t - t^\star)/e\bigr)^2$, and $F(W)$ exceeds $F(W^\star)$ by $\frac12 \sum_i K_i^{-1} (W - W^\star)^2$, so minimality and uniqueness are each one completed square.
+  Not formalised are the typographic premises, that a font realises \eqref{eq:width} exactly and that \eqref{eq:cost} measures ugliness, the overlap bound $t_i \ge -e_i$, and the ablations of Appendix~\ref{sec:ablation}.
+
   \section{Results}
   \label{sec:results}
   The author block of this paper is an equal-width superimposition of its four authors.
@@ -428,14 +454,14 @@
     \centering
     \begin{tabular}{lrrr}
       \toprule
-      Name $i$          & $w_i$ [pt]                               & $s_i$ & $t_i$ [pt] \\
+      Name $i$          & $w_i$ [pt]                                                 & $s_i$ & $t_i$ [pt] \\
       \midrule
-      Peter Waldert     & \equalauthorsSolution{Peter Waldert}                          \\
-      Benedikt Kantz    & \equalauthorsSolution{Benedikt Kantz}                         \\
-      Thomas K\"ohler   & \equalauthorsSolution{Thomas K\"ohler}                        \\
-      Erik D. Demaine   & \equalauthorsSolution{Erik D. Demaine}                        \\
-      Martin L. Demaine & \equalauthorsSolution{Martin L. Demaine}                      \\
-      Jes\'us S. M. A.  & \equalauthorsSolution{Jes\'us Salvador Mart\'inez Alcaide}   \\
+      Peter Waldert     & \equalauthorsSolution{Peter Waldert}                                            \\
+      Benedikt Kantz    & \equalauthorsSolution{Benedikt Kantz}                                           \\
+      Thomas K\"ohler   & \equalauthorsSolution{Thomas K\"ohler}                                          \\
+      Erik D. Demaine   & \equalauthorsSolution{Erik D. Demaine}                                          \\
+      Martin L. Demaine & \equalauthorsSolution{Martin L. Demaine}                                        \\
+      Jes\'us S. M. A.  & \equalauthorsSolution{Jes\'us Salvador Mart\'inez Alcaide}                      \\
       \bottomrule
     \end{tabular}
     \caption{Natural Widths and Optimal Distortions at $W^\star = \equalauthorsWidth$\,pt.
@@ -467,6 +493,7 @@
 
   \appendix
   \section{Ablation studies}
+  \label{sec:ablation}
   \subsection{Allowing only free scaling}
   Changing just the character scale $s$, i.e. setting $t=0$ across names and not introducing further splits reduces complexity at the cost of ugliness.
 

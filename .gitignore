@@ -52,6 +52,5 @@ tinymist.lock
 .lake/
 
 # typst.sty build intermediates
-paper/main-*.*
-paper/typst_dedent.awk
-paper/typst_premble.typ
+paper/main-*.raw
+_typst/
