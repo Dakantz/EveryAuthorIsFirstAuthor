@@ -17,16 +17,22 @@
 \fp_new:N \l_equalauthors_beta_fp    % cost weight on tracking
 \fp_new:N \l_equalauthors_smin_fp
 \fp_new:N \l_equalauthors_smax_fp
+\bool_new:N \l_equalauthors_fix_t_bool   % ignore tracking's contribution to stiffness
+\bool_new:N \l_equalauthors_fix_s_bool   % ignore scaling's contribution to stiffness; force s=1
 \fp_set:Nn \l_equalauthors_alpha_fp {1}
 \fp_set:Nn \l_equalauthors_beta_fp  {1}
 \fp_set:Nn \l_equalauthors_smin_fp  {0.85}
 \fp_set:Nn \l_equalauthors_smax_fp  {1.15}
+\bool_set_false:N \l_equalauthors_fix_t_bool
+\bool_set_false:N \l_equalauthors_fix_s_bool
 \keys_define:nn { equalauthors }
   {
     alpha .fp_set:N = \l_equalauthors_alpha_fp,
     beta  .fp_set:N = \l_equalauthors_beta_fp,
     smin  .fp_set:N = \l_equalauthors_smin_fp,
     smax  .fp_set:N = \l_equalauthors_smax_fp,
+    fix_t .bool_set:N = \l_equalauthors_fix_t_bool,
+    fix_s .bool_set:N = \l_equalauthors_fix_s_bool,
   }
 \NewDocumentCommand \equalauthorsSetup { m } { \keys_set:nn { equalauthors } {#1} }
 
@@ -102,6 +108,19 @@
         + \l_equalauthors_g_fp * \l_equalauthors_g_fp
           * \l_equalauthors_e_fp * \l_equalauthors_e_fp / \l_equalauthors_beta_fp
       }
+    \bool_if:NT \l_equalauthors_fix_t_bool
+      {
+        \fp_set:Nn \l_equalauthors_K_fp
+          { \l_equalauthors_w_fp * \l_equalauthors_w_fp }
+      }
+    \bool_if:NT \l_equalauthors_fix_s_bool
+      {
+        \fp_set:Nn \l_equalauthors_K_fp
+          {
+            \l_equalauthors_g_fp * \l_equalauthors_g_fp
+            * \l_equalauthors_e_fp * \l_equalauthors_e_fp
+          }
+      }
   }
 
 % W* = (sum w_i/K_i) / (sum 1/K_i)
@@ -134,6 +153,7 @@
           { \fp_max:nn { \l_equalauthors_s_fp } { \l_equalauthors_smin_fp } }
           { \l_equalauthors_smax_fp }
       }
+    \bool_if:NT \l_equalauthors_fix_s_bool { \fp_set:Nn \l_equalauthors_s_fp { 1 } }
     \fp_compare:nNnTF { \l_equalauthors_g_fp } > { 0 }
       {
         \fp_set:Nn \l_equalauthors_t_fp

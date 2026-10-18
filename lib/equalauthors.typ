@@ -6,34 +6,42 @@
 #let _clamp(x, lo, hi) = calc.min(calc.max(x, lo), hi)
 
 // Natural width w, cluster count c, gap count g, stiffness K.
-#let _stats(name, alpha, beta) = {
+#let _stats(name, alpha, beta, fix_t, fix_s) = {
   let w = measure(name).width.pt()
   let c = calc.max(name.clusters().len(), 1)
   let g = c - 1
   let e = w / c
-  (w: w, g: g, K: w * w / alpha + g * g * e * e / beta)
+  let K = w * w / alpha + g * g * e * e / beta
+  if fix_t {
+    K = w * w
+  }
+  if fix_s {
+    K = g * g * e * e
+  }
+  (w: w, g: g, K: K)
 }
 
 // W* = (sum w_i/K_i) / (sum 1/K_i): the cost-minimising common width.
-#let optimal-width(names, alpha: 1.0, beta: 1.0) = {
-  let st = names.map(n => _stats(n, alpha, beta))
+#let optimal-width(names, alpha: 1.0, beta: 1.0, fix_t: false, fix_s: false) = {
+  let st = names.map(n => _stats(n, alpha, beta, fix_t, fix_s))
   st.map(x => x.w / x.K).sum() / st.map(x => 1.0 / x.K).sum() * 1pt
 }
 
 // Per-name solution (s, t) for a given common width W.
-#let solve(name, W, alpha: 1.0, beta: 1.0, smin: 0.85, smax: 1.15) = {
-  let x = _stats(name, alpha, beta)
+#let solve(name, W, alpha: 1.0, beta: 1.0, smin: 0.85, smax: 1.15, fix_t: false, fix_s: false) = {
+  let x = _stats(name, alpha, beta, fix_t, fix_s)
   let lam = (W.pt() - x.w) / x.K
   let s = _clamp(1.0 + lam * x.w / alpha, smin, smax)
-  if x.g == 0 { (s: W.pt() / x.w, t: 0pt) }
-  else { (s: s, t: (W.pt() - s * x.w) / x.g * 1pt) }
+  if fix_s {
+    s = 1
+  }
+  if x.g == 0 { (s: W.pt() / x.w, t: 0pt) } else { (s: s, t: (W.pt() - s * x.w) / x.g * 1pt) }
 }
 
 // The distorted name itself; its natural width should already be W.
 #let render(name, W, ..args) = {
   let r = solve(name, W, ..args)
-  scale(x: r.s * 100%, reflow: true, origin: left,
-    text(tracking: r.t / r.s, name))
+  scale(x: r.s * 100%, reflow: true, origin: left, text(tracking: r.t / r.s, name))
 }
 
 // One name typeset to width W (boxed, so rounding cannot leak into layout).
@@ -67,6 +75,8 @@
 #let _fence = "\u{2062}"
 #let equal-references(body, ..args) = {
   show regex("\u{2062}[^\u{2062}]+\u{2062}"): it => eqa-list(
-    it.text.replace("\u{2062}", ""), ..args)
+    it.text.replace("\u{2062}", ""),
+    ..args,
+  )
   body
 }

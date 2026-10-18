@@ -5,7 +5,7 @@
 
 #let names = (
   "Peter Waldert",
-  "Benedikt Kantz",
+  "Benedikt Joachim Kantz",
   "Thomas Köhler",
   "Erik D. Demaine",
   "Martin L. Demaine",
@@ -16,7 +16,20 @@
 )
 
 *Stacked (all should be equal width):*
-#eqa-authors-stacked(names, alpha: 1, beta: 1)
+#eqa-authors-stacked(names, beta: 1)
+#context [W\* = #optimal-width(names)]
+
+*Stacked with $t=0$ (all should be scaled freely, but no inter-character adjustments applied):*\
+#eqa-authors-stacked(names, fix_t: true)
+#context [W\* = #optimal-width(names, fix_t: true)]
+#eqa-authors-stacked(names, alpha: 1e-5)
+#context [W\* = #optimal-width(names, alpha: 1e-5)]
+
+*Stacked with $s=1$ (all should be scaled equally, only no inter-character adjustments applied):*
+#eqa-authors-stacked(names, fix_s: true)
+#context [W\* = #optimal-width(names, fix_s: true)]
+#eqa-authors-stacked(names, beta: 1e-5)
+#context [W\* = #optimal-width(names, beta: 1e-5)]
 #v(1em)
 
 *Superimposed:*
