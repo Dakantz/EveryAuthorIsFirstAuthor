@@ -516,7 +516,7 @@
     d=wx =\lambda w^2,
   $
   turning into the simplified optimal cost \[
-    C*(s) = x^2 = \frac{(W-w)^2}{w^2},
+    C^\star(W) = \frac{1}{2}x^2 = \frac{(W-w)^2}{2 w^2},
   \]
   i.e. $K=w^2$. The common width can then be computed as in the general case. Figure~\ref{fig:stacked:fixed_t} shows the problems when using fixed inter-character spacing: the names seems squished unevenly.
 
@@ -540,7 +540,7 @@
     \omega(s) = gt,
   $
   the cost of a name to \[
-    C(s) =\frac{1}{2} (\frac{g}{t})^2,
+    C(s) =\frac{1}{2} \left(\frac{g}{t}\right)^2,
   \]
   by which the Lagrangian simplifies to \[
     L =\frac{1}{2}\frac{g^2}{t^2} - \lambda (gt-d).
@@ -549,7 +549,7 @@
     d= gt =\lambda g^2 e^2,
   $
   turning into the simplified optimal cost \[
-    C*(s) = x^2 = \frac{(W-w)^2}{g^2 e^2},
+    C^\star(W) = \frac{1}{2}\Bigl(\frac{t}{e}\Bigr)^2 = \frac{(W-w)^2}{2 g^2 e^2},
   \]
   i.e. $K=g^2 e^2$. The common width is, again, computed the same way. Setting the scaling constant reveals even more problematic issues through Figure~\ref{fig:stacked:fixed_s}, as inter-character spacing has to compensate for all width changes.
 
