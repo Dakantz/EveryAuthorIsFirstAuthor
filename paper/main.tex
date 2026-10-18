@@ -228,7 +228,7 @@
       #cetz.canvas({
       import cetz.draw: *
       plot.plot(
-      size: (4.6, 2.6),
+      size: (8.2, 3.8),
       x-label: [share $phi$ taken by scaling], y-label: [cost],
       x-min: 0, x-max: 1, y-min: 0, y-max: 4.4,
       x-tick-step: 0.25, y-tick-step: 1, y-minor-tick-step: none,
@@ -307,7 +307,7 @@
       #cetz.canvas({
       import cetz.draw: *
       plot.plot(
-      size: (4.6, 2.6),
+      size: (7.9, 3.8),
       x-label: [common width $W$ [pt]], y-label: [cost],
       x-min: 62, x-max: 92, y-min: 0, y-max: 0.16,
       x-tick-step: 10, y-tick-step: 0.05, y-minor-tick-step: none,
@@ -323,10 +323,7 @@
           plot.add(((wstar, 0), (wstar, f(wstar))),
           style: (stroke: (paint: red, dash: "dashed", thickness: 0.6pt)))
           plot.add(((wstar, f(wstar)),), mark: "o", mark-size: 0.14,
-          mark-style: (fill: red, stroke: none))
-          plot.annotate({
-              content((wstar + 0.7, f(wstar) + 0.025), text(fill: red)[$W^star$], anchor: "west")
-            })
+          mark-style: (fill: red, stroke: none), style: (stroke: none), label: $W^star$)
         },
       )
       })
