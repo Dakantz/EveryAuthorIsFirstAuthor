@@ -368,7 +368,7 @@
     \item measures each $w_i$ and $g_i$ as described below;
     \item accumulates $\sum_i w_i/K_i$ and $\sum_i 1/K_i$ to obtain $W^\star$;
     \item solves \eqref{eq:split} and \eqref{eq:clamp} per name;
-    \item sets each name as \tex|\scalebox{s}[1]{\textls[l]{name}}| with $s = s_i$ and $l = \ell_i = 1000\,t_i/(s_i\,\mathrm{em})$, the tracking in microtype's units, where $\mathrm{em}$ is the length named after the letter M, which in metal type was cast on a square body and so measures the nominal type size of the current font, and the division by $s_i$ compensates for \tex|\scalebox| scaling the inserted kerns too;
+    \item sets each name as \tex|\scalebox{s}[1]{\textls[l]{name}}| with $s = s_i$ and $l = \ell_i = 1000\,t_i/(s_i\,\mathrm{em})$, the tracking in microtype's units\footnote{The $\mathrm{em}$ is the length named after the letter M, which in metal type was cast on a square body and so measures the nominal type size of the current font.}, where the division by $s_i$ compensates for \tex|\scalebox| scaling the inserted kerns too;
     \item overlaps the resulting boxes with \tex|\hbox_overlap_right:n| inside
           one box of width $W^\star$.
   \end{enumerate}

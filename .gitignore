@@ -54,3 +54,5 @@ tinymist.lock
 # typst.sty build intermediates
 paper/main-*.raw
 _typst/
+paper/arxiv-submission.zip
+paper/arxiv-test.log
