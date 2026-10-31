@@ -367,22 +367,10 @@
   \subsection{\LaTeX}
   \label{sec:latex}
   The package \code|equalauthors.sty| implements \eqref{eq:stiffness} to \eqref{eq:clamp} in \code|expl3| floating point.
-  Names are collected with \tex|\equalauthorsAddAuthor|;
-  \tex|\equalauthorsAuthors| then
+  Names are collected with \tex|\equalauthorsAddAuthor|, and \tex|\equalauthorsAuthors| measures each name and computes $W^\star$ by \eqref{eq:wstar} and the split by \eqref{eq:split} and \eqref{eq:clamp}.
+  Each name is then set as \tex|\scalebox{s}[1]{\textls[l]{name}}| with $s = s_i$ and $l = \ell_i = 1000\,t_i/(s_i\,\mathrm{em})$, the tracking in microtype's units\footnote{The $\mathrm{em}$ is the length named after the letter M, which in metal type was cast on a square body and so measures the nominal type size of the current font.}, where the division by $s_i$ compensates for \tex|\scalebox| scaling the inserted kerns too, and the boxes are overlapped in one box of width $W^\star$.
 
-  \begin{enumerate}
-    \item measures each $w_i$ and $g_i$ as described below;
-    \item accumulates $\sum_i w_i/K_i$ and $\sum_i 1/K_i$ to obtain $W^\star$;
-    \item solves \eqref{eq:split} and \eqref{eq:clamp} per name;
-    \item sets each name as \tex|\scalebox{s}[1]{\textls[l]{name}}| with $s = s_i$ and $l = \ell_i = 1000\,t_i/(s_i\,\mathrm{em})$, the tracking in microtype's units\footnote{The $\mathrm{em}$ is the length named after the letter M, which in metal type was cast on a square body and so measures the nominal type size of the current font.}, where the division by $s_i$ compensates for \tex|\scalebox| scaling the inserted kerns too;
-    \item overlaps the resulting boxes with \tex|\hbox_overlap_right:n| inside
-          one box of width $W^\star$.
-  \end{enumerate}
-
-  The name is never taken apart.
-  An earlier version set each character in its own box and counted characters to obtain $c_i$; this is hostile in three independent ways.
-  On 8-bit engines a UTF-8 character is several input tokens, so splitting it breaks \code|inputenc|; an accent written as a command, \tex|\"o|, is a control sequence plus its letter, so splitting it strips the accent of its argument; and hand-set characters lose their kerning pairs, so the measured $w_i$ no longer describes what is printed.
-  Letterspacing is therefore delegated to the font machinery, via microtype's \tex|\textls|, and the two quantities the model needs are recovered by measurement instead of by parsing,
+  Splitting a name into characters would break UTF-8 input on 8-bit engines, strip accents written as commands, such as \tex|\"o|, of their argument, and lose kerning pairs, so the package never takes a name apart and recovers the two quantities the model needs by measurement,
   \begin{equation}
     w_i = \omega_i(1, 0), \qquad g_i = \frac{\partial \omega_i}{\partial t_i} = \frac{\omega_i(1, \mathrm{em}) - \omega_i(1, 0)}{\mathrm{em}} .
     \label{eq:measure}
@@ -391,16 +379,10 @@
   Microtype also places half the tracking outside the first and last letter, which would be invisible padding, so the package cancels it with a negative kern at either end.
   The remaining quotient equals the gap count, except that microtype stretches an interword space by $4/3$ of the tracking rather than counting it as two gaps, so $g_i$ comes out fractional for names that contain spaces.
   Nothing in Section~\ref{sec:solution} uses integrality, so the solution applies unchanged.
-  The character count enters only through $c_i = g_i + 1$ in $e_i = w_i/c_i$, so it too comes from \eqref{eq:measure} and no notion of ``character'' has to be committed to.
-  The companion command
-  \tex|\equalauthorsAuthorsStacked| prints the same distorted names one per
-  line, which is how one verifies equal width by eye.
+  The companion command \tex|\equalauthorsAuthorsStacked| prints the names one per line (Figure~\ref{fig:stacked}).
 
-  Microtype expresses tracking in whole thousandths of an em, so $\ell_i$ is rounded and the tracking $\tau_i = t_i/s_i$ handed to it is quantised.
-  The residual is not dropped.
-  The scale is re-solved from $s_i (w_i + g_i \tau_i) = W^\star$, which is \eqref{eq:width} with the realised tracking $t_i = s_i \tau_i$, and is the same projection argument as \eqref{eq:clamp} with the roles of the two variables exchanged.
-  The realised width therefore remains exactly $W^\star$, while $s_i$ moves by about $10^{-3}$.
-  When $s_i$ sits at a bound, $\ell_i$ is rounded towards the inside, so that the re-solved scale stays in $[s_{\min}, s_{\max}]$.
+  Microtype rounds tracking to whole thousandths of an em, so the package re-solves the scale from $s_i (w_i + g_i \tau_i) = W^\star$, with $\tau_i$ the quantised tracking handed to microtype.
+  The width thus stays exactly $W^\star$ while $s_i$ moves by about $10^{-3}$, and at a bound $\ell_i$ is rounded towards the inside.
   Weights and bounds are set with
   \begin{lstlisting}[style=latex, gobble=4]
     \equalauthorsSetup{alpha=1, beta=1, smin=0.85, smax=1.15}
@@ -408,20 +390,16 @@
 
   \subsection{Citations}
   A reference list ranks authors exactly as a title page does, so the standard is only self-consistent if citations are superimposed as well.
-  The command
-  \tex|\equalauthorsList| takes a BibTeX-style name list
-  \code|A and B and C|, splits it on \code|and|, and applies \eqref{eq:wstar} and \eqref{eq:split} to the result.
-  No bibliography style has to be patched.
+  The command \tex|\equalauthorsList| takes a BibTeX-style name list \code|A and B and C|, splits it on \code|and|, and applies \eqref{eq:wstar} and \eqref{eq:split} to the result.
   The macro is placed in the \code|author| field of the \code|.bib| entry inside an extra pair of braces,
   \begin{lstlisting}[style=latex, gobble=4]
     author = {{\equalauthorsList{Erik D. Demaine and Martin L. Demaine}}}
   \end{lstlisting}
   which hides the \code|and| separators from biber and makes it pass the field through verbatim.
-  The reference to the original paper~\cite{demaine2023every} in this document is typeset this way.
-  Its common width $W^\star$ is computed over the two cited names alone, since equal width is a property of one name list, never a global constant.
+  Every reference of this paper is typeset this way, each with a common width $W^\star$ over its own names alone.
 
   \subsection{Typst}
-  The Typst package exposes the same functions, \code|optimal-width|, \code|solve|, \code|eqa-authors| and the name-list form \code|eqa-list|, using \code|measure| inside a \code|context| block for $w_i$, \code|scale(x: ..., reflow: true)| for $s_i$, and the \code|text(tracking: ...)| parameter for $t_i$.
+  The Typst package provides the same functions, using \code|measure| for $w_i$, \code|scale| for $s_i$ and the \code|tracking| parameter of \code|text| for $t_i$.
   Grapheme clusters are a native notion there, so the encoding difficulties of Section~\ref{sec:latex} do not arise and $g_i$ is counted directly.
   Typst, too, applies tracking inside the scaled coordinate frame, so the tracking handed to the engine is $t_i / s_i$; the realised width is then $s_i w_i + g_i t_i$ as in \eqref{eq:width}.
   A self-check compiles the distorted names and asserts that every measured width equals $W^\star$ to within $10^{-4}$\,pt.
@@ -429,11 +407,10 @@
   Bibliographies need a different hook there.
   Typst renders references through a CSL style and exposes no element for the author list of an entry, so there is nothing to attach a \code|show| rule to.
   The hook is therefore moved into the citation style itself: \code|equalauthors.csl| is an ordinary numeric style whose only peculiarity is that it fences each entry's author list between two invisible \textsc{u+2062} characters, and the accompanying \code|equal-references| show rule matches exactly those runs and replaces them with the superimposed list.
-  The style does the name formatting and the numbering as usual; the rule never has to guess where a name begins.
 
   \subsection{Formal Verification}
   \label{sec:lean}
-  Every mathematical claim of Sections~\ref{sec:model} to~\ref{sec:impl} is machine-checked in Lean~4~\cite{demoura2021lean4} against Mathlib~\cite{mathlib2020}, in \code|lean/EqualAuthors.lean| at \repolink, without \code|sorry|.
+  Every mathematical claim of Sections~\ref{sec:model} to~\ref{sec:impl} is machine-checked in Lean~4~\cite{demoura2021lean4} against Mathlib~\cite{mathlib2020}, in \code|lean/EqualAuthors.lean| of the accompanying repository\footnote{\repolink}, without \code|sorry|.
   This covers both propositions with uniqueness, the corollary, their composition into the full problem \eqref{eq:problem}, the clamp \eqref{eq:clamp}, the measurement and rounding identities of the implementations, and the containment claim of the introduction; each theorem is named after the label it proves, such as \code|prop_split|.
   The proofs need no Lagrange multipliers, since along the constraint the cost exceeds its optimum by $\frac{\alpha}{2}(s - s^\star)^2 + \frac{\beta}{2}\bigl((t - t^\star)/e\bigr)^2$, and $F(W)$ exceeds $F(W^\star)$ by $\frac12 \sum_i K_i^{-1} (W - W^\star)^2$.
   Not formalised are the typographic premises, that a font realises \eqref{eq:width} and that \eqref{eq:cost} measures ugliness, the spacing details of Section~\ref{sec:latex}, and the ablations of Appendix~\ref{sec:ablation}.
