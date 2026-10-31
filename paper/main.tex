@@ -122,7 +122,7 @@
       \item $e = w / c$, the mean character width, which is the natural length
             scale of the name.
     \end{itemize}
-    Section~\ref{sec:impl} obtains $w$ and $g$ by measurement, without inspecting the name.
+    Section~\ref{sec:impl} obtains $w$ and $g$ by measurement, without inspecting the characters of the name.
   \end{definition}
 
   \begin{definition}[Distortion variables]
@@ -174,7 +174,7 @@
   \subsection{The Optimal Split for a Fixed Width}
   \label{sec:split}
   This subsection concerns one name at a time, so it needs no index.
-  Fix the target width $W$, and write $x = s - 1$ for the scale excess and $d = W - w$ for the width deficit; the constraint $\omega(s,t) = W$ becomes $w x + g t = d$, while the cost \eqref{eq:cost} reads $\frac{\alpha}{2}x^2 + \frac{\beta}{2}(t/e)^2$.
+  Fix the target width $W$, and write $x = s - 1$ for the scale excess and $d = W - w$ for the width deficit; the constraint $\omega(s,t) = W$ becomes $w x + g t = d$, while the cost \eqref{eq:cost} reads $\frac{\alpha}{2}x^2 + \frac{\beta}{2}(t/e)^2$ in these variables.
 
   \begin{definition}[Stiffness]
     The \emph{stiffness} of a name is
@@ -266,7 +266,7 @@
       The share $\phi$ of the deficit taken by scaling costs
       $\alpha \phi^2 + \beta (1-\phi)^2$ in units of $d^2/2w^2$, and the minimum
       (dot) sits at $\phi^\star = \beta/(\alpha+\beta)$, so the weights set the
-      split, up to the approximation $g e \approx w$ of \eqref{eq:ratio}.}
+      split, up to the approximation $g e \approx w$ of the split ratio \eqref{eq:ratio}.}
     \label{fig:split}
   \end{figure}
 
@@ -284,7 +284,7 @@
 
   \begin{proof}
     By \eqref{eq:cstar}, $F(W) = \frac12 \sum_i (W - w_i)^2 / K_i$ is a strictly convex quadratic in $W$ with $F''(W) = \sum_i K_i^{-1} > 0$.
-    Setting $F'(W) = \sum_i (W - w_i)/K_i = 0$ and solving for $W$ gives \eqref{eq:wstar}.
+    Setting $F'(W) = \sum_i (W - w_i)/K_i = 0$ and solving for $W$ gives the weighted mean \eqref{eq:wstar}.
   \end{proof}
 
   \begin{corollary}
@@ -345,7 +345,7 @@
       Each name contributes a parabola $C^\star_i$ whose vertex sits at its
       natural width $w_i$ (grey dots) and whose curvature is $1/K_i$, so stiff
       names pull weakly.
-      The total $F$ is minimised at $W^\star$.}
+      The total $F$ is minimised at $W^\star$ (red dot), nearer the short names.}
     \label{fig:width}
   \end{figure}
 
@@ -379,7 +379,7 @@
   Microtype also places half the tracking outside the first and last letter, which would be invisible padding, so the package cancels it with a negative kern at either end.
   The remaining quotient equals the gap count, except that microtype stretches an interword space by $4/3$ of the tracking rather than counting it as two gaps, so $g_i$ comes out fractional for names that contain spaces.
   Nothing in Section~\ref{sec:solution} uses integrality, so the solution applies unchanged.
-  The companion command \tex|\equalauthorsAuthorsStacked| prints the names one per line (Figure~\ref{fig:stacked}).
+  The companion command \tex|\equalauthorsAuthorsStacked| prints the names one per line at the common width (Figure~\ref{fig:stacked}).
 
   Microtype rounds tracking to whole thousandths of an em, so the package re-solves the scale from $s_i (w_i + g_i \tau_i) = W^\star$, with $\tau_i$ the quantised tracking handed to microtype.
   The width thus stays exactly $W^\star$ while $s_i$ moves by about $10^{-3}$, and at a bound $\ell_i$ is rounded towards the inside.
@@ -459,7 +459,7 @@
   \equalauthorsSetup{alpha=1, beta=1, smin=0.85, smax=1.15}
 
   The long name, Jes\'us Salvador Mart\'inez Alcaide, is on average twice as wide as the other five, yet at the settings of Table~\ref{tab:results} it moves $W^\star$ only from $69.8$ to $73.1$\,pt, where the arithmetic mean would move by $12$\,pt.
-  Its stiffness grows like $w_i^2$, so it pulls with about a quarter of the weight of the others.
+  Its stiffness grows like $w_i^2$, so it pulls with about a quarter of the weight of each of the others.
 
   The same name shows where the default bounds end.
   At $\alpha = \beta = 1$ and $s_i \in [0.85, 1.15]$, its unconstrained scale falls below $s_{\min}$, so the clamp \eqref{eq:clamp} is active and tracking absorbs the remaining $48$\,pt, about $-0.35\,e_i$ per gap.
@@ -480,7 +480,7 @@
   We also skip opacity, which the original construction uses.
   \citeauthor{demaine2023every}~\cite{demaine2023every} set every name in semi-transparent ink, at opacity $2/3$, so that the superimposed names do not merge into a solid black block, and overlapping strokes appear darker, which keeps the individual names legible.
   We print all names at full opacity.
-  Combining the two is promising future work, in particular an opacity that decreases with the number of authors, as \citeauthor{demaine2023every} suggest, since the block grows darker with every name that is added.
+  Combining the two is promising future work, in particular an opacity that decreases with the number of authors, as \citeauthor{demaine2023every} suggest, since at fixed opacity the block grows darker with every name that is added.
 
   Finally, the standard equalises typography, not contribution; nothing here prevents a single coauthor from still doing all the work.
 
@@ -497,7 +497,7 @@
   \label{sec:ablation}
   \subsection{Scaling Only}
   Changing only the glyph scale $s$, that is, setting $t = 0$ for every name, simplifies the model at the cost of ugliness.
-  The realised width of a name reduces to $\omega(s) = s w$ and its cost to
+  The realised width of a name reduces to $\omega(s) = s w$ and its cost \eqref{eq:cost} to its first term,
   \[
     C(s) = \frac{\alpha}{2} (s-1)^2,
   \]
@@ -529,7 +529,7 @@
 
   \subsection{Tracking Only}
   Changing only the tracking $t$, that is, setting $s = 1$ for every name, simplifies the model in the same way and is uglier still.
-  The realised width of a name reduces to $\omega(t) = w + g t$ and its cost to
+  The realised width of a name reduces to $\omega(t) = w + g t$ and its cost \eqref{eq:cost} to its second term,
   \[
     C(t) = \frac{\beta}{2} \Bigl(\frac{t}{e}\Bigr)^2,
   \]
