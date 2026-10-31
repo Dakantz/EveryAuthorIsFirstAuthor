@@ -410,29 +410,14 @@
 
   \subsection{Formal Verification}
   \label{sec:lean}
-  Every mathematical claim of Sections~\ref{sec:model} to~\ref{sec:impl} is machine-checked in Lean~4~\cite{demoura2021lean4} against Mathlib~\cite{mathlib2020}, in \code|lean/EqualAuthors.lean| of the accompanying repository\footnote{\repolink}, without \code|sorry|.
+  Every mathematical claim of Sections~\ref{sec:model} to~\ref{sec:impl} and Appendix~\ref{sec:ablation} is machine-checked in Lean~4~\cite{demoura2021lean4} against Mathlib~\cite{mathlib2020}, in \code|lean/EqualAuthors.lean| of the accompanying repository\footnote{\repolink}, without \code|sorry|.
   This covers both propositions with uniqueness, the corollary, their composition into the full problem \eqref{eq:problem}, the clamp \eqref{eq:clamp}, the measurement and rounding identities of the implementations, and the containment claim of the introduction; each theorem is named after the label it proves, such as \code|prop_split|.
   The proofs need no Lagrange multipliers, since along the constraint the cost exceeds its optimum by $\frac{\alpha}{2}(s - s^\star)^2 + \frac{\beta}{2}\bigl((t - t^\star)/e\bigr)^2$, and $F(W)$ exceeds $F(W^\star)$ by $\frac12 \sum_i K_i^{-1} (W - W^\star)^2$.
-  Not formalised are the typographic premises, that a font realises \eqref{eq:width} and that \eqref{eq:cost} measures ugliness, the spacing details of Section~\ref{sec:latex}, and the ablations of Appendix~\ref{sec:ablation}.
 
   \section{Results}
   \label{sec:results}
   The author block of this paper is an equal-width superimposition of its three authors.
   Table~\ref{tab:results} reports the solution for a six-name example that adds the originators of the standard and one long name, and Figure~\ref{fig:stacked} unstacks the same six names so that the common width can be checked by eye.
-
-  The long name, Jes\'us Salvador Mart\'inez Alcaide, is on average twice as wide as the other five, yet at the settings of Table~\ref{tab:results} it moves $W^\star$ only from $69.8$ to $73.1$\,pt, where the arithmetic mean would move by $12$\,pt.
-  Its stiffness grows like $w_i^2$, so it pulls with about a quarter of the weight of the others.
-
-  The same name shows where the default bounds end.
-  At $\alpha = \beta = 1$ and $s_i \in [0.85, 1.15]$, its unconstrained scale falls below $s_{\min}$, so the clamp \eqref{eq:clamp} is active and tracking absorbs the remaining $48$\,pt, about $-0.35\,e_i$ per gap.
-  That is far above the bound $-e_i$, yet adjacent letters already run into one another and the name becomes illegible.
-  Table~\ref{tab:results} therefore widens the scale range to $[0.5, 1.5]$ and penalises tracking four times as heavily, $\beta = 4$, which moves most of every correction onto the glyphs.
-  The long name is then set at $s_i \approx 0.61$ with $t_i \approx -0.1\,e_i$, condensed but legible, and no clamp is active.
-
-  A very short name stresses the opposite end.
-  Put in place of the long name, Yu Liu, at $w_i = 30.1$\,pt, is the least stiff name of the set and pulls $W^\star$ from $69.8$ down to $48.8$\,pt, as the right block of Figure~\ref{fig:stacked} shows at the same settings.
-  The other five names are condensed to between $s_i \approx 0.65$ and $0.83$, while Yu Liu reaches the bound $s_{\max} = 1.5$ and tracking adds the remainder, about $0.15\,e_i$ per gap.
-  Loose tracking is the milder distortion, so the short name stays legible, although it now sets everyone else's width.
 
   \equalauthorsSetup{alpha=1, beta=4, smin=0.5, smax=1.5}
   \equalauthorsClear
@@ -472,6 +457,20 @@
   \end{figure}
   \equalauthorsSetup{alpha=1, beta=1, smin=0.85, smax=1.15}
 
+  The long name, Jes\'us Salvador Mart\'inez Alcaide, is on average twice as wide as the other five, yet at the settings of Table~\ref{tab:results} it moves $W^\star$ only from $69.8$ to $73.1$\,pt, where the arithmetic mean would move by $12$\,pt.
+  Its stiffness grows like $w_i^2$, so it pulls with about a quarter of the weight of the others.
+
+  The same name shows where the default bounds end.
+  At $\alpha = \beta = 1$ and $s_i \in [0.85, 1.15]$, its unconstrained scale falls below $s_{\min}$, so the clamp \eqref{eq:clamp} is active and tracking absorbs the remaining $48$\,pt, about $-0.35\,e_i$ per gap.
+  That is far above the bound $-e_i$, yet adjacent letters already run into one another and the name becomes illegible.
+  Table~\ref{tab:results} therefore widens the scale range to $[0.5, 1.5]$ and penalises tracking four times as heavily, $\beta = 4$, which moves most of every correction onto the glyphs.
+  The long name is then set at $s_i \approx 0.61$ with $t_i \approx -0.1\,e_i$, condensed but legible, and no clamp is active.
+
+  A very short name stresses the opposite end.
+  Put in place of the long name, Yu Liu, at $w_i = 30.1$\,pt, is the least stiff name of the set and pulls $W^\star$ from $69.8$ down to $48.8$\,pt, as the right block of Figure~\ref{fig:stacked} shows at the same settings.
+  The other five names are condensed to between $s_i \approx 0.65$ and $0.83$, while Yu Liu reaches the bound $s_{\max} = 1.5$ and tracking adds the remainder, about $0.15\,e_i$ per gap.
+  Loose tracking is the milder distortion, so the short name stays legible, although it now sets everyone else's width.
+
   \section{Limitations}
   The cost \eqref{eq:cost} models ugliness; it does not measure it.
   It is symmetric in the sign of the distortion, whereas readers tolerate loose tracking better than tight tracking, and condensed glyphs better than expanded ones; asymmetric weights $\alpha^\pm,\beta^\pm$ would leave the convexity argument unchanged.
@@ -490,9 +489,7 @@
   The split between glyph scaling and tracking is the ratio $\alpha : \beta$ of the two ugliness weights (Proposition~\ref{prop:split}), and the common width is the stiffness-weighted mean \eqref{eq:wstar} of the natural widths (Proposition~\ref{prop:width}).
   Both are one line of arithmetic per name, so every author can be a first author of exactly the same size at no measurable cost in compile time.
 
-  \newpage
   \printbibliography
-  \newpage
 
   \appendix
   \section{Ablation Studies}
@@ -529,7 +526,6 @@
     \label{fig:stacked:fixed_t}
   \end{figure}
 
-  \newpage
   \subsection{Tracking Only}
   Changing only the tracking $t$, that is, setting $s = 1$ for every name, simplifies the model in the same way and is uglier still.
   The realised width of a name reduces to $\omega(t) = w + g t$ and its cost to

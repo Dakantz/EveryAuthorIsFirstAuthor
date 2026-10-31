@@ -5,7 +5,8 @@ Visual Distortion".
 
 Every theorem is named after the label it carries in the paper: `prop_split`,
 `eq_cstar`, `eq_ratio`, `prop_width`, `eq_clamp`, `eq_measure_w` / `eq_measure_g`,
-`eq_problem`.  The definitions keep the paper's symbols: `ω` (eq:width), `C`
+`eq_problem`, and `abl_scale` / `abl_track` for the two ablations of Appendix A.
+The definitions keep the paper's symbols: `ω` (eq:width), `C`
 (eq:cost), `K` (eq:stiffness), `sOpt` / `tOpt` (eq:split), `Wstar` (eq:wstar),
 the variables `w`, `g`, `c`, `e`, `s`, `t`, `W`, and `lam` for the Lagrange
 multiplier the paper writes as a bare lambda.
@@ -290,30 +291,106 @@ theorem typst_frame (s t : ℝ) (hs : s ≠ 0) :
   simp only [ω]
   field_simp
 
+/-! ### Appendix A, ablation studies, for one name -/
+
+/-- A.1: with `t = 0` the width constraint `s w = W` leaves exactly one scale,
+`s = W/w`, which is why "the bounds on `s` cannot be enforced here". -/
+theorem abl_scale_feasible (W s : ℝ) : N.ω s 0 = W ↔ s = W / N.w := by
+  have hw := N.hw.ne'
+  simp only [ω, mul_zero, add_zero]
+  rw [eq_div_iff hw]
+
+/-- A.1: that scale is the stationary point `s = 1 + λ w/α` with
+`λ = d/(w²/α)`. -/
+theorem abl_scale_split (α W : ℝ) (hα : 0 < α) :
+    1 + (W - N.w) / (N.w ^ 2 / α) * N.w / α = W / N.w := by
+  have hw := N.hw.ne'
+  have := hα.ne'
+  field_simp
+  ring
+
+/-- A.1: the optimal cost `C⋆(W) = (W - w)²/(2 w²/α)`, so `K = w²/α`. -/
+theorem abl_scale_cstar (α β W : ℝ) (hα : 0 < α) :
+    N.C α β (W / N.w) 0 = (W - N.w) ^ 2 / (2 * (N.w ^ 2 / α)) := by
+  have hw := N.hw.ne'
+  have := hα.ne'
+  simp only [C, zero_div]
+  field_simp
+  ring
+
+/-- A.2: with `s = 1` and at least one gap, the width constraint `w + g t = W`
+leaves exactly one tracking, `t = (W - w)/g`, the `t̂` of (eq:clamp) at `ŝ = 1`. -/
+theorem abl_track_feasible (W t : ℝ) (hg : 1 ≤ N.g) : N.ω 1 t = W ↔ t = N.tHat W 1 := by
+  have hg' := N.g_ne_zero hg
+  simp only [ω, tHat, one_mul]
+  constructor
+  · intro h; field_simp; linarith
+  · intro h; rw [h]; field_simp; ring
+
+/-- A.2: that tracking is the stationary point `t = λ g e²/β` with
+`λ = d/(g² e²/β)`. -/
+theorem abl_track_split (β W : ℝ) (hβ : 0 < β) (hg : 1 ≤ N.g) :
+    (W - N.w) / ((N.g : ℝ) ^ 2 * N.e ^ 2 / β) * (N.g : ℝ) * N.e ^ 2 / β = N.tHat W 1 := by
+  have hg' := N.g_ne_zero hg
+  have he := N.e_ne_zero
+  have := hβ.ne'
+  simp only [tHat, one_mul]
+  field_simp
+
+/-- A.2: the optimal cost `C⋆(W) = (W - w)²/(2 g² e²/β)`, so `K = g² e²/β`. -/
+theorem abl_track_cstar (α β W : ℝ) (hβ : 0 < β) (hg : 1 ≤ N.g) :
+    N.C α β 1 (N.tHat W 1) = (W - N.w) ^ 2 / (2 * ((N.g : ℝ) ^ 2 * N.e ^ 2 / β)) := by
+  have hg' := N.g_ne_zero hg
+  have he := N.e_ne_zero
+  have := hβ.ne'
+  simp only [C, tHat, one_mul, sub_self]
+  field_simp
+  ring
+
 end Name
 
-/-! ### Section 3.2, the optimal common width -/
+section Width
 
-variable {ι : Type*} (S : Finset ι) (Ns : ι → Name) (α β : ℝ)
+/-! ### Section 3.2, the optimal common width
 
-/-- The outer objective `F(W) = Σᵢ C⋆ᵢ(W)` of Proposition 2. -/
-def F (W : ℝ) : ℝ := ∑ i ∈ S, (W - (Ns i).w) ^ 2 / (2 * (Ns i).K α β)
+Stated for any positive stiffnesses `k i`, so that the ablations of Appendix A,
+whose stiffnesses drop one term of (eq:stiffness), reuse it. -/
+
+variable {ι : Type*} (S : Finset ι) (w k : ι → ℝ)
+
+/-- The outer objective `F(W) = Σᵢ C⋆ᵢ(W) = Σᵢ (W - wᵢ)²/(2Kᵢ)` of Proposition 2. -/
+def F (W : ℝ) : ℝ := ∑ i ∈ S, (W - w i) ^ 2 / (2 * k i)
 
 /-- The denominator of (eq:wstar), `Σᵢ 1/Kᵢ`. -/
-def A : ℝ := ∑ i ∈ S, 1 / (Ns i).K α β
+def A : ℝ := ∑ i ∈ S, 1 / k i
 
 /-- The numerator of (eq:wstar), `Σᵢ wᵢ/Kᵢ`. -/
-def B : ℝ := ∑ i ∈ S, (Ns i).w / (Ns i).K α β
+def B : ℝ := ∑ i ∈ S, w i / k i
 
 /-- Equation (eq:wstar): the stiffness-weighted mean of the natural widths. -/
-def Wstar : ℝ := B S Ns α β / A S Ns α β
+def Wstar : ℝ := B S w k / A S k
 
-lemma A_pos (hS : S.Nonempty) (hα : 0 < α) (hβ : 0 < β) : 0 < A S Ns α β :=
-  Finset.sum_pos (fun i _ => by have := (Ns i).K_pos α β hα hβ; positivity) hS
+/-- The natural widths and the stiffnesses (eq:stiffness) of a family of names. -/
+def ws (Ns : ι → Name) : ι → ℝ := fun i => (Ns i).w
+def Ks (Ns : ι → Name) (α β : ℝ) : ι → ℝ := fun i => (Ns i).K α β
 
-lemma B_eq (hS : S.Nonempty) (hα : 0 < α) (hβ : 0 < β) :
-    B S Ns α β = Wstar S Ns α β * A S Ns α β := by
-  have hA := (A_pos S Ns α β hS hα hβ).ne'
+/-- A.1, scaling only: the stiffness `K = w²/α`. -/
+def KScale (Ns : ι → Name) (α : ℝ) : ι → ℝ := fun i => (Ns i).w ^ 2 / α
+
+/-- A.2, tracking only: the stiffness `K = g² e²/β`. -/
+def KTrack (Ns : ι → Name) (β : ℝ) : ι → ℝ := fun i => ((Ns i).g : ℝ) ^ 2 * (Ns i).e ^ 2 / β
+
+lemma Ks_pos (Ns : ι → Name) (α β : ℝ) (hα : 0 < α) (hβ : 0 < β) :
+    ∀ i ∈ S, 0 < Ks Ns α β i := fun i _ => (Ns i).K_pos α β hα hβ
+
+variable (hS : S.Nonempty) (hk : ∀ i ∈ S, 0 < k i)
+include hS hk
+
+lemma A_pos : 0 < A S k :=
+  Finset.sum_pos (fun i hi => by have := hk i hi; positivity) hS
+
+lemma B_eq : B S w k = Wstar S w k * A S k := by
+  have hA := (A_pos S k hS hk).ne'
   simp only [Wstar]
   field_simp
 
@@ -321,161 +398,190 @@ lemma B_eq (hS : S.Nonempty) (hα : 0 < α) (hβ : 0 < β) :
 Proposition 1 it is an exact positive definite quadratic, which is both the
 strict convexity `F'' = Σ 1/Kᵢ > 0` of the paper's proof and its uniqueness
 claim. -/
-theorem F_sub_F_Wstar (hS : S.Nonempty) (hα : 0 < α) (hβ : 0 < β) (W : ℝ) :
-    F S Ns α β W - F S Ns α β (Wstar S Ns α β)
-      = A S Ns α β / 2 * (W - Wstar S Ns α β) ^ 2 := by
-  set Ws := Wstar S Ns α β with hWs
+theorem F_sub_F_Wstar (W : ℝ) :
+    F S w k W - F S w k (Wstar S w k) = A S k / 2 * (W - Wstar S w k) ^ 2 := by
+  set Ws := Wstar S w k with hWs
   have hstep : ∀ i ∈ S,
-      (W - (Ns i).w) ^ 2 / (2 * (Ns i).K α β)
-          - (Ws - (Ns i).w) ^ 2 / (2 * (Ns i).K α β)
-        = 1 / (Ns i).K α β * ((W - Ws) ^ 2 / 2)
-          + (W - Ws) * (Ws * (1 / (Ns i).K α β) - (Ns i).w / (Ns i).K α β) := by
-    intro i _
-    have hK := (Ns i).K_ne_zero α β hα hβ
+      (W - w i) ^ 2 / (2 * k i) - (Ws - w i) ^ 2 / (2 * k i)
+        = 1 / k i * ((W - Ws) ^ 2 / 2) + (W - Ws) * (Ws * (1 / k i) - w i / k i) := by
+    intro i hi
+    have := (hk i hi).ne'
     field_simp
     ring
-  have hsum1 : ∑ i ∈ S, 1 / (Ns i).K α β * ((W - Ws) ^ 2 / 2)
-      = A S Ns α β * ((W - Ws) ^ 2 / 2) := by
+  have hsum1 : ∑ i ∈ S, 1 / k i * ((W - Ws) ^ 2 / 2) = A S k * ((W - Ws) ^ 2 / 2) := by
     rw [← Finset.sum_mul]; simp only [A]
-  have hsum2 : ∑ i ∈ S, (W - Ws) * (Ws * (1 / (Ns i).K α β) - (Ns i).w / (Ns i).K α β)
-      = (W - Ws) * (Ws * A S Ns α β - B S Ns α β) := by
+  have hsum2 : ∑ i ∈ S, (W - Ws) * (Ws * (1 / k i) - w i / k i)
+      = (W - Ws) * (Ws * A S k - B S w k) := by
     rw [← Finset.mul_sum, Finset.sum_sub_distrib, ← Finset.mul_sum]
     simp only [A, B]
-  calc F S Ns α β W - F S Ns α β Ws
-      = ∑ i ∈ S, ((W - (Ns i).w) ^ 2 / (2 * (Ns i).K α β)
-            - (Ws - (Ns i).w) ^ 2 / (2 * (Ns i).K α β)) := by
+  calc F S w k W - F S w k Ws
+      = ∑ i ∈ S, ((W - w i) ^ 2 / (2 * k i) - (Ws - w i) ^ 2 / (2 * k i)) := by
         simp only [F, Finset.sum_sub_distrib]
-    _ = ∑ i ∈ S, (1 / (Ns i).K α β * ((W - Ws) ^ 2 / 2)
-            + (W - Ws) * (Ws * (1 / (Ns i).K α β) - (Ns i).w / (Ns i).K α β)) :=
+    _ = ∑ i ∈ S, (1 / k i * ((W - Ws) ^ 2 / 2) + (W - Ws) * (Ws * (1 / k i) - w i / k i)) :=
         Finset.sum_congr rfl hstep
-    _ = A S Ns α β * ((W - Ws) ^ 2 / 2)
-          + (W - Ws) * (Ws * A S Ns α β - B S Ns α β) := by
+    _ = A S k * ((W - Ws) ^ 2 / 2) + (W - Ws) * (Ws * A S k - B S w k) := by
         rw [Finset.sum_add_distrib, hsum1, hsum2]
-    _ = A S Ns α β / 2 * (W - Ws) ^ 2 := by
-        rw [B_eq S Ns α β hS hα hβ, ← hWs]; ring
+    _ = A S k / 2 * (W - Ws) ^ 2 := by
+        rw [B_eq S w k hS hk, ← hWs]; ring
 
 /-- Proposition 2 (prop:width): `W⋆` of (eq:wstar) minimises the total
 distortion. -/
-theorem prop_width (hS : S.Nonempty) (hα : 0 < α) (hβ : 0 < β) (W : ℝ) :
-    F S Ns α β (Wstar S Ns α β) ≤ F S Ns α β W := by
-  have h := F_sub_F_Wstar S Ns α β hS hα hβ W
-  have hA := A_pos S Ns α β hS hα hβ
-  nlinarith [sq_nonneg (W - Wstar S Ns α β)]
+theorem prop_width (W : ℝ) : F S w k (Wstar S w k) ≤ F S w k W := by
+  have h := F_sub_F_Wstar S w k hS hk W
+  have hA := A_pos S k hS hk
+  nlinarith [sq_nonneg (W - Wstar S w k)]
 
 /-- Proposition 2 (prop:width): "and it is unique". -/
-theorem prop_width_unique (hS : S.Nonempty) (hα : 0 < α) (hβ : 0 < β) (W : ℝ)
-    (hopt : F S Ns α β W ≤ F S Ns α β (Wstar S Ns α β)) : W = Wstar S Ns α β := by
-  have h := F_sub_F_Wstar S Ns α β hS hα hβ W
-  have hA := A_pos S Ns α β hS hα hβ
-  have hsq : (W - Wstar S Ns α β) ^ 2 = 0 := by nlinarith
+theorem prop_width_unique (W : ℝ) (hopt : F S w k W ≤ F S w k (Wstar S w k)) :
+    W = Wstar S w k := by
+  have h := F_sub_F_Wstar S w k hS hk W
+  have hA := A_pos S k hS hk
+  have hsq : (W - Wstar S w k) ^ 2 = 0 := by nlinarith
   have := sq_eq_zero_iff.mp hsq
   linarith
 
 /-! #### The corollary of Section 3.2 -/
 
-lemma Wstar_le_sup (hS : S.Nonempty) (hα : 0 < α) (hβ : 0 < β) :
-    Wstar S Ns α β ≤ S.sup' hS fun i => (Ns i).w := by
-  have hA := A_pos S Ns α β hS hα hβ
+lemma Wstar_le_sup : Wstar S w k ≤ S.sup' hS w := by
+  have hA := A_pos S k hS hk
   rw [Wstar, div_le_iff₀ hA]
-  calc B S Ns α β = ∑ i ∈ S, (Ns i).w * (1 / (Ns i).K α β) := by
-        simp only [B, mul_one_div]
-    _ ≤ ∑ i ∈ S, (S.sup' hS fun i => (Ns i).w) * (1 / (Ns i).K α β) := by
+  calc B S w k = ∑ i ∈ S, w i * (1 / k i) := by simp only [B, mul_one_div]
+    _ ≤ ∑ i ∈ S, S.sup' hS w * (1 / k i) := by
         refine Finset.sum_le_sum fun i hi => ?_
-        have hK : (0:ℝ) < 1 / (Ns i).K α β := by
-          have := (Ns i).K_pos α β hα hβ; positivity
-        exact mul_le_mul_of_nonneg_right (Finset.le_sup' (fun i => (Ns i).w) hi) hK.le
-    _ = (S.sup' hS fun i => (Ns i).w) * A S Ns α β := by
-        rw [← Finset.mul_sum]; simp only [A]
+        have : (0:ℝ) < 1 / k i := by have := hk i hi; positivity
+        exact mul_le_mul_of_nonneg_right (Finset.le_sup' w hi) this.le
+    _ = S.sup' hS w * A S k := by rw [← Finset.mul_sum]; simp only [A]
 
-lemma inf_le_Wstar (hS : S.Nonempty) (hα : 0 < α) (hβ : 0 < β) :
-    (S.inf' hS fun i => (Ns i).w) ≤ Wstar S Ns α β := by
-  have hA := A_pos S Ns α β hS hα hβ
+lemma inf_le_Wstar : S.inf' hS w ≤ Wstar S w k := by
+  have hA := A_pos S k hS hk
   rw [Wstar, le_div_iff₀ hA]
-  calc (S.inf' hS fun i => (Ns i).w) * A S Ns α β
-      = ∑ i ∈ S, (S.inf' hS fun i => (Ns i).w) * (1 / (Ns i).K α β) := by
+  calc S.inf' hS w * A S k = ∑ i ∈ S, S.inf' hS w * (1 / k i) := by
         rw [← Finset.mul_sum]; simp only [A]
-    _ ≤ ∑ i ∈ S, (Ns i).w * (1 / (Ns i).K α β) := by
+    _ ≤ ∑ i ∈ S, w i * (1 / k i) := by
         refine Finset.sum_le_sum fun i hi => ?_
-        have hK : (0:ℝ) < 1 / (Ns i).K α β := by
-          have := (Ns i).K_pos α β hα hβ; positivity
-        exact mul_le_mul_of_nonneg_right (Finset.inf'_le (fun i => (Ns i).w) hi) hK.le
-    _ = B S Ns α β := by simp only [B, mul_one_div]
+        have : (0:ℝ) < 1 / k i := by have := hk i hi; positivity
+        exact mul_le_mul_of_nonneg_right (Finset.inf'_le w hi) this.le
+    _ = B S w k := by simp only [B, mul_one_div]
 
 /-- The corollary of Section 3.2: `minᵢ wᵢ ≤ W⋆ ≤ maxᵢ wᵢ`. -/
-theorem Wstar_mem_Icc (hS : S.Nonempty) (hα : 0 < α) (hβ : 0 < β) :
-    Wstar S Ns α β ∈
-      Set.Icc (S.inf' hS fun i => (Ns i).w) (S.sup' hS fun i => (Ns i).w) :=
-  ⟨inf_le_Wstar S Ns α β hS hα hβ, Wstar_le_sup S Ns α β hS hα hβ⟩
+theorem Wstar_mem_Icc : Wstar S w k ∈ Set.Icc (S.inf' hS w) (S.sup' hS w) :=
+  ⟨inf_le_Wstar S w k hS hk, Wstar_le_sup S w k hS hk⟩
 
 /-- The corollary of Section 3.2, "with equality only if all `wᵢ` coincide",
 at the upper end. -/
-theorem Wstar_eq_sup_imp (hS : S.Nonempty) (hα : 0 < α) (hβ : 0 < β)
-    (h : Wstar S Ns α β = S.sup' hS fun i => (Ns i).w) :
-    ∀ i ∈ S, (Ns i).w = S.sup' hS fun i => (Ns i).w := by
-  set M := S.sup' hS fun i => (Ns i).w with hM
-  have hzero : ∑ i ∈ S, (M - (Ns i).w) / (Ns i).K α β = 0 := by
-    have hsplit : ∑ i ∈ S, (M - (Ns i).w) / (Ns i).K α β
-        = M * A S Ns α β - B S Ns α β := by
+theorem Wstar_eq_sup_imp (h : Wstar S w k = S.sup' hS w) : ∀ i ∈ S, w i = S.sup' hS w := by
+  set M := S.sup' hS w with hM
+  have hzero : ∑ i ∈ S, (M - w i) / k i = 0 := by
+    have hsplit : ∑ i ∈ S, (M - w i) / k i = M * A S k - B S w k := by
       simp only [A, B, Finset.mul_sum, ← Finset.sum_sub_distrib]
       exact Finset.sum_congr rfl fun i _ => by ring
-    rw [hsplit, B_eq S Ns α β hS hα hβ, h]; ring
-  have hnn : ∀ i ∈ S, 0 ≤ (M - (Ns i).w) / (Ns i).K α β := fun i hi => by
-    have hK := (Ns i).K_pos α β hα hβ
-    have hle : (Ns i).w ≤ M := Finset.le_sup' (fun i => (Ns i).w) hi
-    exact div_nonneg (by linarith) hK.le
+    rw [hsplit, B_eq S w k hS hk, h]; ring
+  have hnn : ∀ i ∈ S, 0 ≤ (M - w i) / k i := fun i hi => by
+    have hle : w i ≤ M := Finset.le_sup' w hi
+    exact div_nonneg (by linarith) (hk i hi).le
   intro i hi
   have hzi := (Finset.sum_eq_zero_iff_of_nonneg hnn).1 hzero i hi
-  have hK := (Ns i).K_ne_zero α β hα hβ
-  rw [div_eq_zero_iff] at hzi
-  rcases hzi with h' | h'
+  rcases div_eq_zero_iff.mp hzi with h' | h'
   · linarith
-  · exact absurd h' hK
+  · exact absurd h' (hk i hi).ne'
 
 /-- The corollary of Section 3.2, "with equality only if all `wᵢ` coincide",
 at the lower end. -/
-theorem Wstar_eq_inf_imp (hS : S.Nonempty) (hα : 0 < α) (hβ : 0 < β)
-    (h : Wstar S Ns α β = S.inf' hS fun i => (Ns i).w) :
-    ∀ i ∈ S, (Ns i).w = S.inf' hS fun i => (Ns i).w := by
-  set m := S.inf' hS fun i => (Ns i).w with hm
-  have hzero : ∑ i ∈ S, ((Ns i).w - m) / (Ns i).K α β = 0 := by
-    have hsplit : ∑ i ∈ S, ((Ns i).w - m) / (Ns i).K α β
-        = B S Ns α β - m * A S Ns α β := by
+theorem Wstar_eq_inf_imp (h : Wstar S w k = S.inf' hS w) : ∀ i ∈ S, w i = S.inf' hS w := by
+  set m := S.inf' hS w with hm
+  have hzero : ∑ i ∈ S, (w i - m) / k i = 0 := by
+    have hsplit : ∑ i ∈ S, (w i - m) / k i = B S w k - m * A S k := by
       simp only [A, B, Finset.mul_sum, ← Finset.sum_sub_distrib]
       exact Finset.sum_congr rfl fun i _ => by ring
-    rw [hsplit, B_eq S Ns α β hS hα hβ, h]; ring
-  have hnn : ∀ i ∈ S, 0 ≤ ((Ns i).w - m) / (Ns i).K α β := fun i hi => by
-    have hK := (Ns i).K_pos α β hα hβ
-    have hle : m ≤ (Ns i).w := Finset.inf'_le (fun i => (Ns i).w) hi
-    exact div_nonneg (by linarith) hK.le
+    rw [hsplit, B_eq S w k hS hk, h]; ring
+  have hnn : ∀ i ∈ S, 0 ≤ (w i - m) / k i := fun i hi => by
+    have hle : m ≤ w i := Finset.inf'_le w hi
+    exact div_nonneg (by linarith) (hk i hi).le
   intro i hi
   have hzi := (Finset.sum_eq_zero_iff_of_nonneg hnn).1 hzero i hi
-  have hK := (Ns i).K_ne_zero α β hα hβ
-  rw [div_eq_zero_iff] at hzi
-  rcases hzi with h' | h'
+  rcases div_eq_zero_iff.mp hzi with h' | h'
   · linarith
-  · exact absurd h' hK
+  · exact absurd h' (hk i hi).ne'
+
+omit hk
+
+variable (Ns : ι → Name) (α β : ℝ)
 
 /-- Definition (Equal-width superimposition problem), (eq:problem), solved:
 the widths `W⋆` and the distortions (eq:split) are feasible and optimal for the
 joint problem over all names and all common widths. -/
-theorem eq_problem (hS : S.Nonempty) (hα : 0 < α) (hβ : 0 < β) :
-    (∀ i ∈ S, (Ns i).ω ((Ns i).sOpt α β (Wstar S Ns α β))
-        ((Ns i).tOpt α β (Wstar S Ns α β)) = Wstar S Ns α β)
+theorem eq_problem (hα : 0 < α) (hβ : 0 < β) :
+    let Ws := Wstar S (ws Ns) (Ks Ns α β)
+    (∀ i ∈ S, (Ns i).ω ((Ns i).sOpt α β Ws) ((Ns i).tOpt α β Ws) = Ws)
     ∧ ∀ (W : ℝ) (s t : ι → ℝ), (∀ i ∈ S, (Ns i).ω (s i) (t i) = W) →
-        ∑ i ∈ S, (Ns i).C α β ((Ns i).sOpt α β (Wstar S Ns α β))
-            ((Ns i).tOpt α β (Wstar S Ns α β))
+        ∑ i ∈ S, (Ns i).C α β ((Ns i).sOpt α β Ws) ((Ns i).tOpt α β Ws)
           ≤ ∑ i ∈ S, (Ns i).C α β (s i) (t i) := by
+  intro Ws
   refine ⟨fun i _ => (Ns i).omega_split α β _ hα hβ, fun W s t hfeas => ?_⟩
   have hF : ∀ V : ℝ, ∑ i ∈ S, (Ns i).C α β ((Ns i).sOpt α β V) ((Ns i).tOpt α β V)
-      = F S Ns α β V := fun V =>
+      = F S (ws Ns) (Ks Ns α β) V := fun V =>
     Finset.sum_congr rfl fun i _ => (Ns i).eq_cstar α β V hα hβ
-  calc ∑ i ∈ S, (Ns i).C α β ((Ns i).sOpt α β (Wstar S Ns α β))
-          ((Ns i).tOpt α β (Wstar S Ns α β))
-      = F S Ns α β (Wstar S Ns α β) := hF _
-    _ ≤ F S Ns α β W := prop_width S Ns α β hS hα hβ W
+  calc ∑ i ∈ S, (Ns i).C α β ((Ns i).sOpt α β Ws) ((Ns i).tOpt α β Ws)
+      = F S (ws Ns) (Ks Ns α β) Ws := hF _
+    _ ≤ F S (ws Ns) (Ks Ns α β) W := prop_width S _ _ hS (Ks_pos S Ns α β hα hβ) W
     _ = ∑ i ∈ S, (Ns i).C α β ((Ns i).sOpt α β W) ((Ns i).tOpt α β W) := (hF W).symm
     _ ≤ ∑ i ∈ S, (Ns i).C α β (s i) (t i) :=
         Finset.sum_le_sum fun i hi => (Ns i).prop_split α β W hα hβ _ _ (hfeas i hi)
+
+/-! ### Appendix A, ablation studies
+
+Each ablation fixes one variable, so the width constraint leaves a single
+feasible value of the other, which is therefore the optimum of the inner
+problem.  Its cost is `(W - w)²/(2K)` with one term of (eq:stiffness) dropped,
+and Proposition 2 with that stiffness gives the common width. -/
+
+/-- A.1, scaling only: every name takes `s = W⋆/w` with `W⋆` the mean
+(eq:wstar) under `K = w²/α`, and this is optimal among all common widths and all
+scales with `t = 0`. -/
+theorem abl_scale (hα : 0 < α) :
+    let Ws := Wstar S (ws Ns) (KScale Ns α)
+    (∀ i ∈ S, (Ns i).ω (Ws / (Ns i).w) 0 = Ws)
+    ∧ ∀ (W : ℝ) (s : ι → ℝ), (∀ i ∈ S, (Ns i).ω (s i) 0 = W) →
+        ∑ i ∈ S, (Ns i).C α β (Ws / (Ns i).w) 0 ≤ ∑ i ∈ S, (Ns i).C α β (s i) 0 := by
+  intro Ws
+  have hk : ∀ i ∈ S, 0 < KScale Ns α i := fun i _ => by
+    have := (Ns i).hw; unfold KScale; positivity
+  refine ⟨fun i _ => ((Ns i).abl_scale_feasible _ _).mpr rfl, fun W s hfeas => ?_⟩
+  have hF : ∀ V : ℝ, ∑ i ∈ S, (Ns i).C α β (V / (Ns i).w) 0 = F S (ws Ns) (KScale Ns α) V :=
+    fun V => Finset.sum_congr rfl fun i _ => (Ns i).abl_scale_cstar α β V hα
+  have hs : ∀ i ∈ S, s i = W / (Ns i).w := fun i hi =>
+    ((Ns i).abl_scale_feasible W (s i)).mp (hfeas i hi)
+  have hsum : ∑ i ∈ S, (Ns i).C α β (s i) 0 = ∑ i ∈ S, (Ns i).C α β (W / (Ns i).w) 0 :=
+    Finset.sum_congr rfl fun i hi => by rw [hs i hi]
+  rw [hsum, hF, hF]
+  exact prop_width S _ _ hS hk W
+
+/-- A.2, tracking only: every name with at least one gap takes
+`t = (W⋆ - w)/g` with `W⋆` the mean (eq:wstar) under `K = g² e²/β`, and this is
+optimal among all common widths and all trackings with `s = 1`. -/
+theorem abl_track (hβ : 0 < β) (hg : ∀ i ∈ S, 1 ≤ (Ns i).g) :
+    let Ws := Wstar S (ws Ns) (KTrack Ns β)
+    (∀ i ∈ S, (Ns i).ω 1 ((Ns i).tHat Ws 1) = Ws)
+    ∧ ∀ (W : ℝ) (t : ι → ℝ), (∀ i ∈ S, (Ns i).ω 1 (t i) = W) →
+        ∑ i ∈ S, (Ns i).C α β 1 ((Ns i).tHat Ws 1) ≤ ∑ i ∈ S, (Ns i).C α β 1 (t i) := by
+  intro Ws
+  have hk : ∀ i ∈ S, 0 < KTrack Ns β i := fun i hi => by
+    have := (Ns i).e_pos
+    have : (0 : ℝ) < (Ns i).g := Nat.cast_pos.mpr (by have := hg i hi; omega)
+    unfold KTrack; positivity
+  refine ⟨fun i hi => (Ns i).omega_tHat _ (hg i hi) 1, fun W t hfeas => ?_⟩
+  have hF : ∀ V : ℝ, ∑ i ∈ S, (Ns i).C α β 1 ((Ns i).tHat V 1)
+      = F S (ws Ns) (KTrack Ns β) V :=
+    fun V => Finset.sum_congr rfl fun i hi => (Ns i).abl_track_cstar α β V hβ (hg i hi)
+  have ht : ∀ i ∈ S, t i = (Ns i).tHat W 1 := fun i hi =>
+    ((Ns i).abl_track_feasible W (t i) (hg i hi)).mp (hfeas i hi)
+  have hsum : ∑ i ∈ S, (Ns i).C α β 1 (t i) = ∑ i ∈ S, (Ns i).C α β 1 ((Ns i).tHat W 1) :=
+    Finset.sum_congr rfl fun i hi => by rw [ht i hi]
+  rw [hsum, hF, hF]
+  exact prop_width S _ _ hS hk W
+
+
+end Width
 
 /-! ### Section 1, what the standard is for -/
 
