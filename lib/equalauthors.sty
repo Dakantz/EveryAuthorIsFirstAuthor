@@ -6,6 +6,7 @@
   {Equal-width superimposed author names}
 \RequirePackage{graphicx}
 \RequirePackage{microtype}   % provides \textls (letterspace)
+\RequirePackage{xcolor}
 
 \cs_if_exist:NF \textls
   { \msg_new:nnn { equalauthors } { no-textls }
@@ -250,15 +251,24 @@
     \group_end:
   }
 
-% all authors, one per line -- same width, for inspection
+% all authors, one per line -- same width, for inspection, with a coloured
+% rule down the left edge; redefine its colour with \definecolor.
+\definecolor{equalauthorsrule}{rgb}{0.15,0.35,0.75}
 \NewDocumentCommand \equalauthorsAuthorsStacked { } {
   \group_begin:
     \equalauthors_use_authors:
     \equalauthors_optimal_width:
-    \begin{tabular}{@{}l@{}}
-      \seq_map_inline:Nn \l_equalauthors_list_seq
-        { \equalauthors_one:n {##1} \\ }
-    \end{tabular}
+    \seq_set_map:NNn \l_tmpa_seq \l_equalauthors_list_seq
+      { \equalauthors_one:n {##1} }
+    \mode_leave_vertical:
+    \hbox:n
+      {
+        \textcolor{equalauthorsrule} { \vrule width 0.3pt }
+        \skip_horizontal:n { 4pt }
+        \begin{tabular}{@{}l@{}}
+          \seq_use:Nn \l_tmpa_seq { \\ }
+        \end{tabular}
+      }
   \group_end:
 }
 

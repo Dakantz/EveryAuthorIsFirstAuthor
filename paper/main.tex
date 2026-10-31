@@ -410,7 +410,7 @@
 
   \subsection{Formal Verification}
   \label{sec:lean}
-  Every mathematical claim of Sections~\ref{sec:model} to~\ref{sec:impl} and Appendix~\ref{sec:ablation} is machine-checked in Lean~4~\cite{demoura2021lean4} against Mathlib~\cite{mathlib2020}, in \code|lean/EqualAuthors.lean| of the accompanying repository\footnote{\repolink}, without \code|sorry|.
+  Every mathematical claim of Sections~\ref{sec:model} to~\ref{sec:impl} and Appendix~\ref{sec:ablation} is machine-checked in Lean~4~\cite{demoura2021lean4} against Mathlib~\cite{mathlib2020}, in \code|lean/EqualAuthors.lean| of the accompanying repository\footnote{\repolink}, with every proof complete.
   This covers both propositions with uniqueness, the corollary, their composition into the full problem \eqref{eq:problem}, the clamp \eqref{eq:clamp}, the measurement and rounding identities of the implementations, and the containment claim of the introduction; each theorem is named after the label it proves, such as \code|prop_split|.
   The proofs need no Lagrange multipliers, since along the constraint the cost exceeds its optimum by $\frac{\alpha}{2}(s - s^\star)^2 + \frac{\beta}{2}\bigl((t - t^\star)/e\bigr)^2$, and $F(W)$ exceeds $F(W^\star)$ by $\frac12 \sum_i K_i^{-1} (W - W^\star)^2$.
 
@@ -451,7 +451,8 @@
     \equalAuthorsBase
     \equalauthorsAddAuthor{Yu Liu}
     \equalauthorsAuthorsStacked
-    \caption{The Six Names of Table~\ref{tab:results}, Distorted and Printed Separately (Left), and the Same Set With Yu Liu in Place of the Long Name (Right).
+    \caption{Stacked Names at the Common Width.
+      Left, the six names of Table~\ref{tab:results}, distorted and printed separately; right, the same set with Yu Liu in place of the long name.
       All lines of a block have the common width $W^\star$ of that block.}
     \label{fig:stacked}
   \end{figure}
