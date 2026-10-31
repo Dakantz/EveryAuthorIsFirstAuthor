@@ -255,7 +255,7 @@
       The share $\phi$ of the deficit taken by scaling costs
       $\alpha \phi^2 + \beta (1-\phi)^2$ in units of $d^2/2w^2$, and the minimum
       (dot) sits at $\phi^\star = \beta/(\alpha+\beta)$, so the weights set the
-      split and nothing else does.}
+      split, up to the approximation $g e \approx w$ of \eqref{eq:ratio}.}
     \label{fig:split}
   \end{figure}
 
@@ -280,7 +280,7 @@
     $\min_i w_i \le W^\star \le \max_i w_i$, with equality only if all $w_i$ coincide.
   \end{corollary}
 
-  So the optimal target is neither the widest name, which would stretch everyone else, nor the arithmetic mean width, but a mean that down-weights names that are expensive to move.
+  So the optimal target is neither the widest name, which would stretch everyone else, nor the arithmetic mean width, but a mean that gives most weight to the names that are most expensive to move.
   Figure~\ref{fig:width} shows the mechanism.
   Since $K_i$ grows roughly like $w_i^2$, long names are stiff, contribute little pull, and $W^\star$ is biased towards the short names - correctly, because a short name pays the largest \emph{relative} distortion for a given absolute change.
 
@@ -348,7 +348,7 @@
   \end{equation}
   for $g_i \ge 1$.
   This projection is exact.
-  With $s_i$ at a bound, the objective is convex in the single remaining variable $t_i$, whose value is then pinned by the width constraint.
+  Along the width constraint $t_i$ is determined by $s_i$, and the cost becomes a convex quadratic in $s_i$ alone, centred at the unconstrained optimum, so clamping $s_i$ to the box minimises it.
   Single-character names ($g_i = 0$) have no gaps to track and must take $s_i = W^\star / w_i$ regardless of the bounds; the model degenerates gracefully and stays feasible.
 
   \section{Implementation}
@@ -442,14 +442,14 @@
   \end{itemize}
   The proofs need no Lagrange multipliers.
   Both optimality results follow from exact identities: along the constraint, the cost of any $(s,t)$ exceeds that of the split $(s^\star, t^\star)$ of \eqref{eq:split} by $\frac{\alpha}{2}(s - s^\star)^2 + \frac{\beta}{2}\bigl((t - t^\star)/e\bigr)^2$, and $F(W)$ exceeds $F(W^\star)$ by $\frac12 \sum_i K_i^{-1} (W - W^\star)^2$, so minimality and uniqueness are each one completed square.
-  Not formalised are the typographic premises, that a font realises \eqref{eq:width} exactly and that \eqref{eq:cost} measures ugliness, the overlap bound $t_i \ge -e_i$, and the ablations of Appendix~\ref{sec:ablation}.
+  Not formalised are the typographic premises, that a font realises \eqref{eq:width} exactly and that \eqref{eq:cost} measures ugliness, the overlap bound $t_i \ge -e_i$, the fractional $g_i$ and the rounding direction of Section~\ref{sec:latex}, and the ablations of Appendix~\ref{sec:ablation}.
 
   \section{Results}
   \label{sec:results}
   The author block of this paper is an equal-width superimposition of its three authors.
   Table~\ref{tab:results} reports the solution for a six-name example that adds the originators of the standard and one long name, and Figure~\ref{fig:stacked} unstacks the same six names so that the common width can be checked by eye.
 
-  The long name, Jes\'us Salvador Mart\'inez Alcaide, is on average twice as wide as the other five, yet it moves $W^\star$ only from $69.8$ to $73.1$\,pt, where the arithmetic mean would move by $12$\,pt.
+  The long name, Jes\'us Salvador Mart\'inez Alcaide, is on average twice as wide as the other five, yet at the settings of Table~\ref{tab:results} it moves $W^\star$ only from $69.8$ to $73.1$\,pt, where the arithmetic mean would move by $12$\,pt.
   Its stiffness grows like $w_i^2$, so it pulls with about a quarter of the weight of the others.
 
   The same name shows where the default bounds end.

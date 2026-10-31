@@ -1,12 +1,14 @@
 /-
 Formalisation of `paper/main.tex`,
-"Truly Every Author is First Author via Equal-Width Superimposition".
+"Truly Every Author is First Author: Equal-Width Superimposition by Minimising
+Visual Distortion".
 
-Every definition and theorem is named after the label it carries in the paper:
-`eq_width`, `eq_cost`, `eq_stiffness`, `prop_split` / `eq_split` / `eq_cstar`,
-`eq_ratio`, `prop_width` / `eq_wstar`, `eq_clamp`, `eq_measure`; the variables
-are the paper's `w`, `g`, `c`, `e`, `s`, `t`, `W`, `K`, and `lam` for the
-Lagrange multiplier the paper writes as a bare lambda.
+Every theorem is named after the label it carries in the paper: `prop_split`,
+`eq_cstar`, `eq_ratio`, `prop_width`, `eq_clamp`, `eq_measure_w` / `eq_measure_g`,
+`eq_problem`.  The definitions keep the paper's symbols: `ω` (eq:width), `C`
+(eq:cost), `K` (eq:stiffness), `sOpt` / `tOpt` (eq:split), `Wstar` (eq:wstar),
+the variables `w`, `g`, `c`, `e`, `s`, `t`, `W`, and `lam` for the Lagrange
+multiplier the paper writes as a bare lambda.
 -/
 import Mathlib
 
@@ -207,9 +209,8 @@ lemma tHat_sOpt (α β W : ℝ) (hg : 1 ≤ N.g) (hα : 0 < α) (hβ : 0 < β) :
   field_simp
   linarith
 
-/-- "With `s` at a bound, the objective is convex in the single remaining
-variable `t`": along the re-solved line the cost is an exact quadratic in the
-scale, centred at the unconstrained optimum of (eq:split). -/
+/-- "Along the width constraint the cost becomes a convex quadratic in `s`
+alone, centred at the unconstrained optimum" of (eq:split). -/
 theorem phi_sub (α β W : ℝ) (hg : 1 ≤ N.g) (hα : 0 < α) (hβ : 0 < β) (s' : ℝ) :
     N.C α β s' (N.tHat W s') - N.C α β (N.sOpt α β W) (N.tOpt α β W)
       = (α + β * N.w ^ 2 / ((N.g : ℝ) ^ 2 * N.e ^ 2)) / 2 * (s' - N.sOpt α β W) ^ 2 := by
@@ -271,13 +272,15 @@ theorem eq_measure_g (em : ℝ) (hem : em ≠ 0) :
   field_simp
   ring
 
-/-- Microtype quantises the tracking to whole thousandths of an em; recomputing
-the scale from the quantised `t` keeps the realised width exactly `W⋆`. -/
-theorem quantised_scale_exact (W t : ℝ) : N.ω ((W - (N.g : ℝ) * t) / N.w) t = W := by
-  have hw := N.hw.ne'
+/-- Microtype quantises the tracking `τ = t/s` it is handed to whole thousandths
+of an em; re-solving the scale from `s (w + g τ) = W` keeps the realised width,
+with realised tracking `t = s τ`, exactly `W⋆`. -/
+theorem quantised_scale_exact (W τ : ℝ) (h : N.w + (N.g : ℝ) * τ ≠ 0) :
+    N.ω (W / (N.w + (N.g : ℝ) * τ)) (W / (N.w + (N.g : ℝ) * τ) * τ) = W := by
   simp only [ω]
-  field_simp
-  ring
+  rw [show W / (N.w + (N.g : ℝ) * τ) * N.w + (N.g : ℝ) * (W / (N.w + (N.g : ℝ) * τ) * τ)
+      = W / (N.w + (N.g : ℝ) * τ) * (N.w + (N.g : ℝ) * τ) by ring]
+  exact div_mul_cancel₀ W h
 
 /-- "Typst applies tracking inside the scaled coordinate frame, so the tracking
 handed to the engine is `t/s`; the realised width is then `s w + g t` as in
@@ -476,7 +479,7 @@ theorem eq_problem (hS : S.Nonempty) (hα : 0 < α) (hβ : 0 < β) :
 
 /-! ### Section 1, what the standard is for -/
 
-/-- "If Xu Li and Martin L. Demaine are overprinted, the shorter name is
+/-- "If Yu Liu and Martin L. Demaine are overprinted, the shorter name is
 contained in the longer one."  Superimposition pins both names to a common
 origin, so the ink of a name is the interval `[0, ω]` and width alone recovers a
 ranking. -/
