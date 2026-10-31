@@ -67,7 +67,8 @@
 % #1 <- width (pt) of the current name letterspaced by #2 (1/1000 em per gap)
 \cs_new_protected:Npn \equalauthors_measure:Nn #1#2
   {
-    \hbox_set:Nn \l_equalauthors_box { \textls[#2]{\l_equalauthors_name_tl} }
+    \hbox_set:Nn \l_equalauthors_box
+      { \equalauthors_textls:nn {#2} { \l_equalauthors_name_tl } }
     \fp_set:Nn #1 { \dim_to_fp:n { \box_wd:N \l_equalauthors_box } }
   }
 
@@ -81,7 +82,15 @@
       { \exp_args:NV \equalauthors_textls:nn \l_equalauthors_ls_tl
           { \l_equalauthors_name_tl } }
   }
-\cs_new_protected:Npn \equalauthors_textls:nn #1#2 { \textls[#1]{#2} }
+% \textls also puts half the tracking outside the first and last letter.  That
+% is invisible padding, so cancel it: the box then ends where the ink does,
+% and the measured slope is the tracking between letters only.
+\cs_new_protected:Npn \equalauthors_textls:nn #1#2
+  {
+    \kern \dim_eval:n { -1em * (#1) / 2000 }
+    \textls[#1]{#2}
+    \kern \dim_eval:n { -1em * (#1) / 2000 }
+  }
 
 %% ---- the optimisation -----------------------------------------------------
 \fp_new:N \l_equalauthors_W_fp
@@ -101,6 +110,9 @@
     \equalauthors_measure:Nn \l_equalauthors_tmp_fp { 1000 }
     \fp_set:Nn \l_equalauthors_g_fp
       { ( \l_equalauthors_tmp_fp - \l_equalauthors_w_fp ) / \l_equalauthors_em_fp }
+    % a single letter measures 0 up to rounding noise; make it exactly 0
+    \fp_set:Nn \l_equalauthors_g_fp
+      { abs ( \l_equalauthors_g_fp ) < 0.001 ? 0 : \l_equalauthors_g_fp }
     % no tracking is the same as no gaps: K = w^2/alpha, t = 0, s = W/w
     \bool_if:NT \l_equalauthors_fix_t_bool { \fp_zero:N \l_equalauthors_g_fp }
     \fp_set:Nn \l_equalauthors_e_fp
