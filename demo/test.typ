@@ -12,7 +12,7 @@
   "Y Wuuuuuuuuuu",
   "Donaudampfschiffskapitän",
   "Jesus Salvador Martinez Alcaide",
-  "Liu Yu",
+  "Yu Liu",
 )
 
 *Stacked (all should be equal width):*

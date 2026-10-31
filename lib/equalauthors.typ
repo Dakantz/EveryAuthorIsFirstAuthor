@@ -9,20 +9,19 @@
 #let _stats(name, alpha, beta, fix_t, fix_s) = {
   let w = measure(name).width.pt()
   let c = calc.max(name.clusters().len(), 1)
-  let g = c - 1
+  // no tracking is the same as no gaps: K = w^2/alpha, t = 0, s = W/w
+  let g = if fix_t { 0 } else { c - 1 }
   let e = w / c
   let K = w * w / alpha + g * g * e * e / beta
-  if fix_t {
-    K = w * w
-  }
   if fix_s {
-    K = g * g * e * e
+    K = g * g * e * e / beta
   }
   (w: w, g: g, K: K)
 }
 
 // W* = (sum w_i/K_i) / (sum 1/K_i): the cost-minimising common width.
-#let optimal-width(names, alpha: 1.0, beta: 1.0, fix_t: false, fix_s: false) = {
+// The bounds (smin, smax) only matter per name, so they are accepted and ignored.
+#let optimal-width(names, alpha: 1.0, beta: 1.0, fix_t: false, fix_s: false, ..bounds) = {
   let st = names.map(n => _stats(n, alpha, beta, fix_t, fix_s))
   st.map(x => x.w / x.K).sum() / st.map(x => 1.0 / x.K).sum() * 1pt
 }
