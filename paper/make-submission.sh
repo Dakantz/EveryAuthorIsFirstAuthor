@@ -21,7 +21,7 @@ trap 'rm -rf "$stage"' EXIT
   echo sources.bib
 } | grep -vE '^main\.(aux|out|run\.xml)$' | sort -u | while read -r f; do
   [ -f "$f" ] || continue  # listed temporaries that are gone by now
-  dest=$stage/src/${f#../}  # ../lib/equalauthors.sty -> lib/, found via \input@path
+  dest=$stage/src/${f#../lib/}  # ../lib/equalauthors.sty -> root, where arXiv's scanner looks for it
   mkdir -p "$(dirname "$dest")"
   cp "$f" "$dest"
 done

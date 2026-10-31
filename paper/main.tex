@@ -1,5 +1,5 @@
 \documentclass[10pt,twocolumn]{article}
-\usepackage[a4paper, margin=1.25cm, bottom=2cm]{geometry}
+\usepackage[a4paper, margin=1.25cm, left=1.5cm, right=1cm, bottom=2cm]{geometry}
 \setlength{\columnsep}{0.6cm}
 \usepackage{amsmath, amssymb, amsthm}
 \usepackage{booktabs}
@@ -74,7 +74,7 @@
             We give a quadratic distortion model, solve the per-name trade-off in closed form by Lagrange multipliers, and show that the total-distortion optimal common width is a stiffness-weighted mean of the natural widths.
             We provide implementations as a \LaTeX{} package and a Typst package, covering author blocks and bibliography entries alike; this paper typesets its own author block and its own reference with the former.
             Every proposition is machine-checked in Lean.
-            The \LaTeX{} and Typst packages, and the proofs are available at \repolink.
+            The \LaTeX{} and Typst packages, and the proofs, are available at \repolink.
           \end{abstract}
         \end{minipage}
       \end{center}
@@ -84,6 +84,7 @@
   \makeatother
 
   \section{Introduction}
+  \vspace*{-2.2pt}
   The convention that author order encodes credit is a lossy encoding of a partial order into a total one.
   \citeauthor{demaine2023every} \cite{demaine2023every} resolve it by making the encoding degenerate, superimposing all author names at the same position, so that no name precedes another.
 
