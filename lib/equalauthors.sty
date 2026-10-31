@@ -55,6 +55,7 @@
 \box_new:N \l_equalauthors_box
 \tl_new:N \l_equalauthors_name_tl
 \tl_new:N \l_equalauthors_ls_tl
+\tl_new:N \l_equalauthors_rnd_tl
 \fp_new:N \l_equalauthors_em_fp
 
 \cs_new_protected:Npn \equalauthors_normalise:n #1
@@ -100,6 +101,8 @@
     \equalauthors_measure:Nn \l_equalauthors_tmp_fp { 1000 }
     \fp_set:Nn \l_equalauthors_g_fp
       { ( \l_equalauthors_tmp_fp - \l_equalauthors_w_fp ) / \l_equalauthors_em_fp }
+    % no tracking is the same as no gaps: K = w^2/alpha, t = 0, s = W/w
+    \bool_if:NT \l_equalauthors_fix_t_bool { \fp_zero:N \l_equalauthors_g_fp }
     \fp_set:Nn \l_equalauthors_e_fp
       { \l_equalauthors_w_fp / ( \l_equalauthors_g_fp + 1 ) }
     \fp_set:Nn \l_equalauthors_K_fp
@@ -108,17 +111,12 @@
         + \l_equalauthors_g_fp * \l_equalauthors_g_fp
           * \l_equalauthors_e_fp * \l_equalauthors_e_fp / \l_equalauthors_beta_fp
       }
-    \bool_if:NT \l_equalauthors_fix_t_bool
-      {
-        \fp_set:Nn \l_equalauthors_K_fp
-          { \l_equalauthors_w_fp * \l_equalauthors_w_fp }
-      }
     \bool_if:NT \l_equalauthors_fix_s_bool
       {
         \fp_set:Nn \l_equalauthors_K_fp
           {
             \l_equalauthors_g_fp * \l_equalauthors_g_fp
-            * \l_equalauthors_e_fp * \l_equalauthors_e_fp
+            * \l_equalauthors_e_fp * \l_equalauthors_e_fp / \l_equalauthors_beta_fp
           }
       }
   }
@@ -147,13 +145,23 @@
       { ( \l_equalauthors_W_fp - \l_equalauthors_w_fp ) / \l_equalauthors_K_fp }
     \fp_set:Nn \l_equalauthors_s_fp
       { 1 + \l_equalauthors_lam_fp * \l_equalauthors_w_fp / \l_equalauthors_alpha_fp }
-    \fp_set:Nn \l_equalauthors_s_fp
+    % clamp; at a bound, quantise the tracking towards the inside (see below)
+    \tl_set:Nn \l_equalauthors_rnd_tl { round }
+    \fp_compare:nNnT { \l_equalauthors_s_fp } < { \l_equalauthors_smin_fp }
       {
-        \fp_min:nn
-          { \fp_max:nn { \l_equalauthors_s_fp } { \l_equalauthors_smin_fp } }
-          { \l_equalauthors_smax_fp }
+        \fp_set_eq:NN \l_equalauthors_s_fp \l_equalauthors_smin_fp
+        \tl_set:Nn \l_equalauthors_rnd_tl { floor }
       }
-    \bool_if:NT \l_equalauthors_fix_s_bool { \fp_set:Nn \l_equalauthors_s_fp { 1 } }
+    \fp_compare:nNnT { \l_equalauthors_s_fp } > { \l_equalauthors_smax_fp }
+      {
+        \fp_set_eq:NN \l_equalauthors_s_fp \l_equalauthors_smax_fp
+        \tl_set:Nn \l_equalauthors_rnd_tl { ceil }
+      }
+    \bool_if:NT \l_equalauthors_fix_s_bool
+      {
+        \fp_set:Nn \l_equalauthors_s_fp { 1 }
+        \tl_set:Nn \l_equalauthors_rnd_tl { round }
+      }
     \fp_compare:nNnTF { \l_equalauthors_g_fp } > { 0 }
       {
         \fp_set:Nn \l_equalauthors_t_fp
@@ -161,18 +169,23 @@
             ( \l_equalauthors_W_fp - \l_equalauthors_s_fp * \l_equalauthors_w_fp )
             / \l_equalauthors_g_fp
           }
-        % \textls only takes whole 1/1000 em, so quantise the tracking and give
-        % the rounding residual back to the scale: the width stays exact.
+        % \scalebox scales the letterspaced name, kerns included, so \textls
+        % gets t/s.  It only takes whole 1/1000 em, so quantise that and give
+        % the residual back to the scale, s = W / (w + g t/s): the width stays
+        % exact, and floor/ceil at a bound keep s inside [smin, smax].
         \fp_set:Nn \l_equalauthors_ls_fp
-          { round ( 1000 * \l_equalauthors_t_fp / \l_equalauthors_em_fp ) }
-        \fp_set:Nn \l_equalauthors_t_fp
-          { \l_equalauthors_ls_fp * \l_equalauthors_em_fp / 1000 }
+          {
+            \l_equalauthors_rnd_tl ( 1000 * \l_equalauthors_t_fp
+              / ( \l_equalauthors_s_fp * \l_equalauthors_em_fp ) )
+          }
         \fp_set:Nn \l_equalauthors_s_fp
           {
-            ( \l_equalauthors_W_fp
-              - \l_equalauthors_g_fp * \l_equalauthors_t_fp )
-            / \l_equalauthors_w_fp
+            \l_equalauthors_W_fp
+            / ( \l_equalauthors_w_fp + \l_equalauthors_g_fp
+                * \l_equalauthors_ls_fp * \l_equalauthors_em_fp / 1000 )
           }
+        \fp_set:Nn \l_equalauthors_t_fp
+          { \l_equalauthors_s_fp * \l_equalauthors_ls_fp * \l_equalauthors_em_fp / 1000 }
       }
       {
         \fp_zero:N \l_equalauthors_t_fp
@@ -241,7 +254,7 @@
 \NewDocumentCommand \equalauthorsWidth { } {
   \group_begin:
     \equalauthors_use_authors: \equalauthors_optimal_width:
-    \fp_to_decimal:N \l_equalauthors_W_fp
+    \fp_eval:n { round ( \l_equalauthors_W_fp , 2 ) }
   \group_end: }
 
 % per-author solution as three table cells "w & s & t".
