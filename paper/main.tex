@@ -12,6 +12,7 @@
 \usepackage[backend=biber, style=numeric]{biblatex}
 \addbibresource{sources.bib}
 \hypersetup{ urlcolor=blue, linkcolor=blue, citecolor=blue }
+\newcommand{\repolink}{\href{https://github.com/pwaldert/EveryAuthorIsFirstAuthor}{github.com/MrP01/EveryAuthorIsFirstAuthor}}
 
 % The package lives in ../lib.  Symlinks do not survive an upload to
 % Overleaf (they arrive as text files, and the whole preamble then prints as
@@ -67,6 +68,7 @@
             We give a quadratic distortion model, solve the per-name trade-off in closed form by Lagrange multipliers, and show that the total-distortion optimal common width is a stiffness-weighted mean of the natural widths.
             We provide implementations as a \LaTeX{} package and a Typst package, covering author blocks and bibliography entries alike; this paper typesets its own author block and its own reference with the former.
             Every proposition is machine-checked in Lean.
+            The \LaTeX{} and Typst packages, and the proofs are available at \repolink.
           \end{abstract}
         \end{minipage}
       \end{center}
@@ -78,23 +80,25 @@
   \section{Introduction}
   The convention that author order encodes credit is a lossy encoding of a partial order into a total one.
   \citeauthor{demaine2023every} \cite{demaine2023every} resolve it by making the encoding degenerate, superimposing all author names at the same position, so that no name precedes another.
+
   AMOR~\cite{weiherer2024amor} takes the opposite route and keeps the list, but shuffles it at random whenever it is viewed, so that no order is fixed.
   This removes the ranking across views but not within any single one, where some name still comes first; superimposition removes it in every view, and is the construction we build on.
 
   Superimposition removes the horizontal ordering but not the horizontal \emph{extent}.
-  If Yu Liu and Martin L.~Demaine are overprinted, the shorter name is contained in the longer one, and the reader's eye recovers a ranking from ink coverage, where the widest name frames the block and the narrowest hides inside it.
+  If, for example, Yu Liu and Martin L.~Demaine are overprinted, the shorter name is contained in the longer one, and the reader's eye recovers a ranking from ink coverage, where the widest name frames the block and the narrowest hides inside it.
   Formally, superimposition quotients out translation but leaves width as a visible, and thus creditable, per-author quantity.
   In Tufte's terms~\cite{tufte1983visual}, the block has an unbounded lie factor: it displays a width difference where the data, equal credit, has none.
 
   We therefore require that all names be typeset to one common width.
   Since names cannot be padded with whitespace - padding is invisible under superimposition and merely restores the containment problem - the width must be achieved by distorting the letters themselves.
+
   Two distortions are available, and they differ in character.
   Scaling the glyphs horizontally changes letterform, while tracking changes only the gaps.
   Both are ugly in excess.
   The engineering question is how to divide a required width change between them, and what common width to aim at in the first place.
 
   Sections~\ref{sec:model} and~\ref{sec:solution} answer both in closed form.
-  Section~\ref{sec:impl} describes the implementations, the figures and a machine-checked proof of every claim, and Section~\ref{sec:results} the resulting numbers.
+  Section~\ref{sec:impl} describes the implementations and a machine-checked proof of every claim, and Section~\ref{sec:results} the results.
 
   \section{Problem Statement}
   \label{sec:model}
@@ -421,29 +425,12 @@
   The hook is therefore moved into the citation style itself: \code|equalauthors.csl| is an ordinary numeric style whose only peculiarity is that it fences each entry's author list between two invisible \textsc{u+2062} characters, and the accompanying \code|equal-references| show rule matches exactly those runs and replaces them with the superimposed list.
   The style does the name formatting and the numbering as usual; the rule never has to guess where a name begins.
 
-  \subsection{Figures}
-  Figures~\ref{fig:split} and~\ref{fig:width} are drawn with the CeTZ plotting library for Typst\footnote{\url{https://github.com/cetz-package/cetz}}, although the paper itself is typeset with \LaTeX.
-  A small package, \code|typst.sty|, writes the body of each \code|typst| environment to a file, compiles it with \code|typst compile| through shell escape, and includes the resulting PDF, recompiling only when the source has changed.
-  The plots read no precomputed data but evaluate the model themselves.
-  Figure~\ref{fig:split} plots the cost of dividing a deficit between the two distortions, whose minimum is the split of Proposition~\ref{prop:split}, and Figure~\ref{fig:width} computes $K_i$ by \eqref{eq:stiffness}, $C^\star_i$ by \eqref{eq:cstar} and $W^\star$ by \eqref{eq:wstar} from five pairs of natural width and character count.
-  The figure sources are therefore a third implementation of the closed form, next to the two packages.
-
   \subsection{Formal Verification}
   \label{sec:lean}
-  Every mathematical claim of Sections~\ref{sec:model} to~\ref{sec:impl} is machine-checked in Lean~4~\cite{demoura2021lean4} against Mathlib~\cite{mathlib2020}, in the file \code|lean/EqualAuthors.lean| of the accompanying repository, which contains no \code|sorry|.
-  A name is a structure carrying $w > 0$ and $g \in \mathbb{N}$, every other quantity is a real number, and each theorem is named after the label of the equation or proposition it proves, so that \code|prop_split|, \code|eq_cstar| or \code|prop_width| lead from the text to the proof and back.
-  The formalisation covers
-  \begin{itemize}
-    \item Proposition~\ref{prop:split} with uniqueness, the optimal value \eqref{eq:cstar}, and the ratio \eqref{eq:ratio} in its exact form;
-    \item Proposition~\ref{prop:width} with uniqueness, and its corollary including the equality case;
-    \item the joint optimality of $W^\star$ and \eqref{eq:split} for the full problem \eqref{eq:problem}, which composes the two stages;
-    \item the exactness of the projection \eqref{eq:clamp}, and feasibility for $g_i = 0$;
-    \item the implementation identities: the measurement \eqref{eq:measure}, the exact width after quantised tracking, and the $t_i/s_i$ correction for the scaled frame;
-    \item the claim of the introduction that superimposed names of different width contain one another, and that names of equal width cover exactly the same extent.
-  \end{itemize}
-  The proofs need no Lagrange multipliers.
-  Both optimality results follow from exact identities: along the constraint, the cost of any $(s,t)$ exceeds that of the split $(s^\star, t^\star)$ of \eqref{eq:split} by $\frac{\alpha}{2}(s - s^\star)^2 + \frac{\beta}{2}\bigl((t - t^\star)/e\bigr)^2$, and $F(W)$ exceeds $F(W^\star)$ by $\frac12 \sum_i K_i^{-1} (W - W^\star)^2$, so minimality and uniqueness are each one completed square.
-  Not formalised are the typographic premises, that a font realises \eqref{eq:width} exactly and that \eqref{eq:cost} measures ugliness, the overlap bound $t_i \ge -e_i$, the fractional $g_i$ and the rounding direction of Section~\ref{sec:latex}, and the ablations of Appendix~\ref{sec:ablation}.
+  Every mathematical claim of Sections~\ref{sec:model} to~\ref{sec:impl} is machine-checked in Lean~4~\cite{demoura2021lean4} against Mathlib~\cite{mathlib2020}, in \code|lean/EqualAuthors.lean| at \repolink, without \code|sorry|.
+  This covers both propositions with uniqueness, the corollary, their composition into the full problem \eqref{eq:problem}, the clamp \eqref{eq:clamp}, the measurement and rounding identities of the implementations, and the containment claim of the introduction; each theorem is named after the label it proves, such as \code|prop_split|.
+  The proofs need no Lagrange multipliers, since along the constraint the cost exceeds its optimum by $\frac{\alpha}{2}(s - s^\star)^2 + \frac{\beta}{2}\bigl((t - t^\star)/e\bigr)^2$, and $F(W)$ exceeds $F(W^\star)$ by $\frac12 \sum_i K_i^{-1} (W - W^\star)^2$.
+  Not formalised are the typographic premises, that a font realises \eqref{eq:width} and that \eqref{eq:cost} measures ugliness, the spacing details of Section~\ref{sec:latex}, and the ablations of Appendix~\ref{sec:ablation}.
 
   \section{Results}
   \label{sec:results}
@@ -520,7 +507,9 @@
   The split between glyph scaling and tracking is the ratio $\alpha : \beta$ of the two ugliness weights (Proposition~\ref{prop:split}), and the common width is the stiffness-weighted mean \eqref{eq:wstar} of the natural widths (Proposition~\ref{prop:width}).
   Both are one line of arithmetic per name, so every author can be a first author of exactly the same size at no measurable cost in compile time.
 
+  \newpage
   \printbibliography
+  \newpage
 
   \appendix
   \section{Ablation Studies}
@@ -557,6 +546,7 @@
     \label{fig:stacked:fixed_t}
   \end{figure}
 
+  \newpage
   \subsection{Tracking Only}
   Changing only the tracking $t$, that is, setting $s = 1$ for every name, simplifies the model in the same way and is uglier still.
   The realised width of a name reduces to $\omega(t) = w + g t$ and its cost to
