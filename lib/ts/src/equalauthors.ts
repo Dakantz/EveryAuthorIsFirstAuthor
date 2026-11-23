@@ -21,9 +21,22 @@ export const graphemeCount = (s: string): number => {
 export function sum(arr: number[]): number {
     return arr.reduce((acc, val) => acc + val, 0);
 }
-export const stat = (author: string, css: string, alpha: number = 1, beta: number = 1): AuthorStats => {
-    const w = getTextWidth(author, css);
-    console.log(`Author: ${author}, width: ${w}, font: ${css}`);
+// Measure in the DOM (not canvas) so width uses the exact font resolution/shaping the rendered divs get.
+// Ligatures off: browsers drop them anyway once letter-spacing != 0, so w must be measured without them.
+export const measureWidth = (text: string, parent: HTMLElement): number => {
+    const span = document.createElement("span");
+    span.style.whiteSpace = "pre";
+    span.style.fontVariantLigatures = "none";
+    span.style.position = "absolute";
+    span.style.visibility = "hidden";
+    span.textContent = text;
+    parent.appendChild(span);
+    const w = span.getBoundingClientRect().width;
+    span.remove();
+    return w;
+};
+export const stat = (author: string, w: number, alpha: number = 1, beta: number = 1): AuthorStats => {
+    console.log(`Author: ${author}, width: ${w}`);
     const c = graphemeCount(author);
 
     let g = c - 1;
@@ -55,13 +68,20 @@ const styleContainer = (element: HTMLElement): void => {
 const styleAuthor = (div: HTMLElement, author: EqualizedAuthor, font: string): void => {
     div.style.margin = "0";
     div.style.padding = "0";
-    div.style.letterSpacing = `${author.t}px`;
+    // scaleX also scales letter-spacing, so pre-divide: rendered width = s*w + g*t
+    div.style.letterSpacing = `${author.t / author.s}px`;
+    div.style.fontVariantLigatures = "none";
+    div.style.whiteSpace = "pre";
     div.style.transform = `scaleX(${author.s})`;
     div.style.transformOrigin = "left"; // default is center, which leaves a gap on the left
     div.style.float = "left";
 };
-export const solve = (authors: string[], fontString: string, alpha: number, beta: number): EqualizedAuthor[] => {
-    const stats = authors.map(a => stat(a, fontString, alpha, beta));
+export const solve = (authors: string[], element: HTMLElement, alpha: number, beta: number): EqualizedAuthor[] => {
+    // detached elements have no layout (width 0), so attach temporarily for measuring
+    const detached = !element.isConnected;
+    if (detached) document.body.appendChild(element);
+    const stats = authors.map(a => stat(a, measureWidth(a, element), alpha, beta));
+    if (detached) element.remove();
     const optimal_width = stats.reduce((acc, s) => acc + s.w / s.K, 0) / stats.reduce((acc, s) => acc + 1 / s.K, 0);
     return stats.map(s => solveAuthor(s, optimal_width, alpha, beta));
 };
@@ -75,7 +95,7 @@ const appendAuthor = (element: HTMLElement, author: EqualizedAuthor, font: strin
 export const equalizeAuthorsOnto = (authors: string[], element: HTMLElement, alpha: number = 1, beta: number = 1): void => {
     styleContainer(element);
     const fontString = getElementFontString(element);
-    const solved_authors = solve(authors, fontString, alpha, beta);
+    const solved_authors = solve(authors, element, alpha, beta);
     // stack authors on top of each other via absolute positioning
     for (const author of solved_authors) {
         appendAuthor(element, author, fontString).style.position = "absolute";
@@ -86,7 +106,7 @@ export const equalizeAuthorsStack = (authors: string[], element: HTMLElement, al
     styleContainer(element);
     element.style.clear = "both";
     const fontString = getElementFontString(element);
-    const solved_authors = solve(authors, fontString, alpha, beta);
+    const solved_authors = solve(authors, element, alpha, beta);
     for (const author of solved_authors) {
         appendAuthor(element, author, fontString).style.display = "block";
     }
